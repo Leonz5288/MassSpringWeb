@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <script src="https://cdn.bootcdn.net/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+        <title>Mass Spring</title>
+        <style>
+            .canvas {
+                align: center;
+            }
+        </style>
+    </head>
+
+    <body style="background-color:rgb(21, 29, 31);">
+        <canvas id="canvas" height="512" width="512"></canvas>
+
+        <script src="/mass_spring.js"></script>
+        <script src="/taichi.js"></script>
+        <script>
+            var mass_spring = {};
+            var canvas = document.getElementById("canvas");
+            mass_spring = new MassSpring(canvas);
+            mass_spring.loadScript('/compiled.js');
+        </script>
+    </body>
+</html>
