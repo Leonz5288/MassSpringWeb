@@ -19,6 +19,10 @@ def ms_js():
 def compiled():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'compiled.js')
 
+@app.route('/create_robot.js')
+def robot():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'create_robot.js')
+
 @app.route('/app.wasm')
 def wasm():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'app.wasm')

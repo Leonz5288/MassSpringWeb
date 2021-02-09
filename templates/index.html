@@ -3,6 +3,9 @@
     <head>
         <meta charset="utf-8">
         <script src="https://cdn.bootcdn.net/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+        <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+        <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
         <title>Mass Spring</title>
         <style>
             .canvas {
@@ -13,14 +16,24 @@
 
     <body style="background-color:rgb(21, 29, 31);">
         <canvas id="canvas" height="512" width="512"></canvas>
+        <button id="train" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+        Train
+        </button>
+  
 
         <script src="/mass_spring.js"></script>
         <script src="/taichi.js"></script>
+        <script src="/create_robot.js"></script>
         <script>
-            var mass_spring = {};
-            var canvas = document.getElementById("canvas");
-            mass_spring = new MassSpring(canvas);
-            mass_spring.loadScript('/compiled.js');
+            var train_button = document.getElementById("train");
+            
+            train_button.onclick = function() {
+                console.log("clicked");
+                var mass_spring = {};
+                var canvas = document.getElementById("canvas");
+                mass_spring = new MassSpring(canvas);
+                mass_spring.loadScript('/compiled.js');
+            }
         </script>
     </body>
 </html>
