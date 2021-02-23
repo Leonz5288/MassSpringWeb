@@ -23,22 +23,13 @@ n_input_states = n_sin_waves + 4 * n_objects + 2
 
 max_num_particle = 256
 max_num_spring = 512
-particle_mass = 1.0
 dt = 0.004
-spring_Y = 1000
-drag_damping = 1
-dashpot_damping = 50
 learning_rate = 25
 ground_height = 0.1
 
-num_spring = ti.field(int, ())
-num_particle = ti.field(int, ())
 pos = ti.Vector.field(2, float, max_num_particle)
-speed = ti.Vector.field(2, float, max_num_particle)
-force = ti.Vector.field(2, float, max_num_particle)
 spring_anchor_a = ti.field(int, n_springs)
 spring_anchor_b = ti.field(int, n_springs)
-rest_length = ti.field(float, (max_num_spring, max_num_spring))
 
 x = ti.Vector.field(2, float)
 v = ti.Vector.field(2, float)
@@ -57,6 +48,7 @@ bias2 = ti.field(float, n_springs)
 hidden = ti.field(float, (max_steps, n_hidden))
 center = ti.Vector.field(2, float, max_steps)
 act = ti.field(float, (max_steps, n_springs))
+increase = ti.field(int, ())
 
 ti.root.lazy_grad()
 
@@ -133,6 +125,7 @@ def reset() -> int:
     goal[None] = [0.9, 0.2]
     loss[None] = 0
     loss.grad[None] = 1
+    increase[None] = 0
 
     setup_robot()
     for i in ti.static(range(n_objects)):
@@ -168,7 +161,7 @@ def nn1(t: int):
     for i in range(n_hidden):
         actuation = 0.0
         for j in ti.static(range(n_sin_waves)):
-            actuation += weights1[i, j] * ti.sin(spring_omega * t * dt + 2 * math.pi / n_sin_waves * j)
+            actuation += weights1[i, j] * ti.sin(spring_omega * increase[None] * dt + 2 * math.pi / n_sin_waves * j)
         for j in ti.static(range(n_objects)):
             offset = x[t, j] - center[t]
             # use a smaller weight since there are too many of them
@@ -187,7 +180,7 @@ def nn1_grad(t: int):
     for i in range(n_hidden):
         actuation = 0.0
         for j in ti.static(range(n_sin_waves)):
-            actuation += weights1[i, j] * ti.sin(spring_omega * t * dt + 2 * math.pi / n_sin_waves * j)
+            actuation += weights1[i, j] * ti.sin(spring_omega * increase[None] * dt + 2 * math.pi / n_sin_waves * j)
         for j in ti.static(range(n_objects)):
             offset = x[t, j] - center[t]
             # use a smaller weight since there are too many of them
@@ -329,6 +322,7 @@ def compute_loss_grad(t: int):
 
 @hub.kernel
 def clear_states():
+    increase[None] = 0
     for t in range(0, max_steps):
         for i in range(0, n_objects):
             v_inc[t, i] = ti.Vector([0.0, 0.0])
@@ -337,6 +331,10 @@ def clear_states():
 def render(t: int):
     for i in range(n_objects):
         pos[i] = x[t, i]
+
+@hub.kernel
+def increasing():
+    increase[None] += 1
 
 @hub.kernel
 def clear_gradients():
@@ -366,6 +364,18 @@ def clear_gradients():
         spring_length.grad[i] = 0.0
         spring_stiffness.grad[i] = 0.0
         spring_actuation.grad[i] = 0.0
+
+@hub.kernel
+def copy_status():
+    for i in range(n_objects):
+        x[0, i] = x[1, i]
+        v[0, i] = v[1, i]
+        v_inc[0, i] = v_inc[1, i]
+    for i in range(n_springs):
+        act[0, i] = act[1, i]
+    for i in range(n_hidden):
+        hidden[0, i] = hidden[1, i]
+    center[0] = center[1]
 
 @hub.kernel
 def optimize():

@@ -16,11 +16,8 @@ play() {
   this.gui = new TaichiGUI(this.canvas, 512);
 
   this.reset = this.program.get("reset");
-  //this.substep = this.program.get("substep");
   this.render = this.program.get("render");
-  //this.onclick = this.program.get("onclick");
-  //this.load_texture = this.program.get("hub_load_texture");
-  //this.texture_url = this.program.get_config_str("hub_texture_url");
+  this.increasing = this.program.get("increasing");
 
   this.compute_center = this.program.get("compute_center");
   this.nn1 = this.program.get("nn1");
@@ -43,6 +40,7 @@ play() {
   this.optimize = this.program.get("optimize");
   this.optimize1 = this.program.get("optimize1");
 
+  this.copy_status = this.program.get("copy_status")
   this.export_data = this.program.get("hub_get_particles");
   this.get_num_particles = this.program.get("hub_get_num_particles");
   console.log(typeof this.get_num_particles);
@@ -76,6 +74,7 @@ play() {
       this.apply_spring_force();
       this.program.set_arg_int(0, i);
       this.advance_toi();
+      this.increasing();
     }
     this.program.set_arg_int(0, this.steps - 1);
     this.compute_loss();
@@ -94,6 +93,7 @@ play() {
       this.nn1_grad();
       this.program.set_arg_int(0, i - 1);
       this.compute_center_grad();
+      this.increasing();
     }
 
     this.program.set_arg_int(0, iter);
@@ -138,13 +138,15 @@ onUpdate() {
 }
 
 substep() {
-  this.program.set_arg_int(0, this.frame - 1);
+  this.program.set_arg_int(0, this.frame-1);
   this.compute_center();
   this.nn1();
   this.nn2();
   this.apply_spring_force();
   this.program.set_arg_int(0, this.frame);
   this.advance_toi();
+  this.increasing();
+  this.copy_status();
 }
 
 perFrame() {
@@ -167,11 +169,13 @@ terminate() {
 
 loadScript(url) {
     console.log("loadScript(" + url + ")");
-    console.log($ + " meaning");
     $.ajax({
       url: url,
       type: "GET",
-      dataType: "text", // we will evaluate it ourself
+      dataType: "text", 
+      headers: {
+        'Cache-Control': 'no-cache'
+      },
       success: function (res) {
         $("#label-status").html("loaded");
         console.log("Successfully loaded:", url);

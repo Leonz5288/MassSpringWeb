@@ -12,3 +12,8 @@ htmlcov/
 dist/
 build/
 *.egg-info/
+compile/app/main.py.c
+compile/app/main.py.h
+compile/app/main.py.yml
+compile/compiled.js
+compile/compiled.wasm

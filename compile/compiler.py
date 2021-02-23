@@ -63,7 +63,7 @@ def do_compile(target, source=None, extra=[]):
     # AJAX loaded Javascript doesn't seems support document.currentScript.src,
     # which is being used in Emscripten generated JS stub.
     # So we do a quick hack to make AJAX happy:
-    s = s.replace('var scriptDirectory=""', 'var scriptDirectory="/cache/"', 1)
+    s = s.replace('compiled.wasm', 'app.wasm', 1)
     with open(f'{target}.js', 'w') as f:
         f.write(s)
 

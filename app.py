@@ -2,6 +2,7 @@ from flask import Flask
 from flask import render_template, send_from_directory
 import os
 app = Flask(__name__)
+app.config["CACHE_TYPE"] = "null"
 
 @app.route('/')
 def mass_spring():
@@ -17,7 +18,7 @@ def ms_js():
 
 @app.route('/compiled.js')
 def compiled():
-    return send_from_directory(os.path.join(app.root_path, 'static'), 'compiled.js')
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'compiled.js', cache_timeout=0)
 
 @app.route('/create_robot.js')
 def robot():
@@ -25,4 +26,4 @@ def robot():
 
 @app.route('/app.wasm')
 def wasm():
-    return send_from_directory(os.path.join(app.root_path, 'static'), 'app.wasm')
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'app.wasm', cache_timeout=0)
