@@ -20,11 +20,9 @@ def do_compile(target, source=None, extra=[]):
                 '-e', 'TI_ACTION_RECORD=/app/main.py.yml', '-e', 'TI_ARCH=cc',
                 docker_image, 'python', 'main.py']).decode().strip()
         subprocess.check_call(['docker', 'cp', source, container + ':/app/main.py'])
-        for e in extra:
-            subprocess.check_call(['docker', 'cp', e, container + ':/app/' + os.path.basename(e)])
+        subprocess.check_call(['docker', 'cp', extra, container + ':/app/' + os.path.basename(extra)])
         try:
-            output = subprocess.check_output(['docker', 'start', '-a', container],
-                stderr=subprocess.STDOUT, timeout=20)
+            output = subprocess.check_output(['docker', 'start', '-a', container], stderr=subprocess.STDOUT, timeout=20)
         except subprocess.CalledProcessError as e:
             print('Error while generating action record:')
             print(e.output)
@@ -77,7 +75,7 @@ def start_compile():
 
     script = f'/compiled.js'
 
-    src = '/Users/leon5288/Desktop/Programming/taichi/mass_spring/compile/main.py'
+    src = '/Users/leon5288/Desktop/Programming/taichi/mass_spring/compile/app/main.py'
     ext = '/Users/leon5288/Desktop/Programming/taichi/mass_spring/static/hub.py'
 
     print('compiling', src, 'to', dst)
@@ -87,7 +85,6 @@ def start_compile():
     output = output.decode()
     ret = {'status': status, 'output': output}
     if status == 'success':
-        ret['cacheid'] = cacheid
         ret['script'] = script
     return ret
 
