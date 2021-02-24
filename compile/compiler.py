@@ -22,7 +22,7 @@ def do_compile(target, source=None, extra=[]):
         subprocess.check_call(['docker', 'cp', source, container + ':/app/main.py'])
         subprocess.check_call(['docker', 'cp', extra, container + ':/app/' + os.path.basename(extra)])
         try:
-            output = subprocess.check_output(['docker', 'start', '-a', container], stderr=subprocess.STDOUT, timeout=20)
+            output = subprocess.check_output(['docker', 'start', '-a', container], stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             print('Error while generating action record:')
             print(e.output)

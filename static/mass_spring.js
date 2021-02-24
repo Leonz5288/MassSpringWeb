@@ -138,12 +138,12 @@ onUpdate() {
 }
 
 substep() {
-  this.program.set_arg_int(0, this.frame-1);
+  this.program.set_arg_int(0, 0);
   this.compute_center();
   this.nn1();
   this.nn2();
   this.apply_spring_force();
-  this.program.set_arg_int(0, this.frame);
+  this.program.set_arg_int(0, 1);
   this.advance_toi();
   this.increasing();
   this.copy_status();

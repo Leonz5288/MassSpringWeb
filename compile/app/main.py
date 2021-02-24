@@ -31,6 +31,9 @@ pos = ti.Vector.field(2, float, max_num_particle)
 spring_anchor_a = ti.field(int, n_springs)
 spring_anchor_b = ti.field(int, n_springs)
 
+real_obj = ti.field(int, ())
+real_spring = ti.field(int, ())
+
 x = ti.Vector.field(2, float)
 v = ti.Vector.field(2, float)
 v_inc = ti.Vector.field(2, float)
@@ -126,6 +129,8 @@ def reset() -> int:
     loss[None] = 0
     loss.grad[None] = 1
     increase[None] = 0
+    real_obj[None] = n_objects
+    real_spring[None] = n_springs
 
     setup_robot()
     for i in ti.static(range(n_objects)):
@@ -370,18 +375,19 @@ def copy_status():
     for i in range(n_objects):
         x[0, i] = x[1, i]
         v[0, i] = v[1, i]
-        v_inc[0, i] = v_inc[1, i]
+        v_inc[0, i] = ti.Vector([0, 0])
+        v_inc[1, i] = ti.Vector([0, 0])
     for i in range(n_springs):
-        act[0, i] = act[1, i]
+        act[0, i] = 0.0
     for i in range(n_hidden):
-        hidden[0, i] = hidden[1, i]
-    center[0] = center[1]
+        hidden[0, i] = 0.0
+    center[0] = ti.Vector([0, 0])
 
 @hub.kernel
 def optimize():
     for i in range(n_hidden):
-        for j in range(n_input_states):
-            weights1[i, j] = ti.random() * ti.sqrt(2 / (n_hidden + n_input_states)) * 2
+        for j in range(n_sin_waves + 4 * n_objects + 2):
+            weights1[i, j] = ti.random() * ti.sqrt(2 / (n_hidden + (n_sin_waves + 4 * n_objects + 2))) * 2
 
     for i in range(n_springs):
         for j in range(n_hidden):
@@ -394,7 +400,7 @@ def optimize1(iter: int) -> float:
 
     total_norm_sqr = 0.0
     for i in range(n_hidden):
-        for j in range(n_input_states):
+        for j in range(n_sin_waves + 4 * n_objects + 2):
             total_norm_sqr += weights1.grad[i, j]**2
         total_norm_sqr += bias1.grad[i]**2
 
@@ -410,7 +416,7 @@ def optimize1(iter: int) -> float:
     ## scale = learning_rate * min(1.0, gradient_clip / total_norm_sqr ** 0.5)
     scale = gradient_clip / (total_norm_sqr**0.5 + 1e-6)
     for i in range(n_hidden):
-        for j in range(n_input_states):
+        for j in range(n_sin_waves + 4 * n_objects + 2):
             weights1[i, j] -= scale * weights1.grad[i, j]
         bias1[i] -= scale * bias1.grad[i]
 
