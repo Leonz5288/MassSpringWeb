@@ -1,3 +1,5 @@
+// import springs from "./create_robot.js"
+// import points from "./create_robot.js"
 class MassSpring {
   constructor(canvas) {
     this.paused = false;
@@ -18,13 +20,15 @@ play() {
   this.reset = this.program.get("reset");
   this.render = this.program.get("render");
   this.increasing = this.program.get("increasing");
+  this.set_mask = this.program.get("set_mask");
+  this.pass_point = this.program.get("pass_point");
+  this.pass_spring = this.program.get("pass_spring");
 
   this.compute_center = this.program.get("compute_center");
   this.nn1 = this.program.get("nn1");
   this.nn2 = this.program.get("nn2");
   this.apply_spring_force = this.program.get("apply_spring_force");
   this.advance_toi = this.program.get("advance_toi");
-  this.advance_no_toi = this.program.get("advance_no_toi");
   this.compute_loss = this.program.get("compute_loss");
   this.clear_states = this.program.get("clear_states");
 
@@ -33,7 +37,6 @@ play() {
   this.nn2_grad = this.program.get("nn2_grad");
   this.apply_spring_force_grad = this.program.get("apply_spring_force_grad");
   this.advance_toi_grad = this.program.get("advance_toi_grad");
-  this.advance_no_toi_grad = this.program.get("advance_no_toi_grad");
   this.compute_loss_grad = this.program.get("compute_loss_grad");
   this.clear_gradients = this.program.get("clear_gradients");
 
@@ -43,7 +46,6 @@ play() {
   this.copy_status = this.program.get("copy_status")
   this.export_data = this.program.get("hub_get_particles");
   this.get_num_particles = this.program.get("hub_get_num_particles");
-  console.log(typeof this.get_num_particles);
   if (typeof this.get_num_particles == "undefined") {
     this.get_num_particles = function () {
       program.set_arg_int(0, 8192);
@@ -54,6 +56,20 @@ play() {
   this.get_num_springs = this.program.get("get_num_springs");
   this.get_spring_anchors = this.program.get("get_spring_anchors");
 
+  this.set_mask();
+  for (var i = 0; i < points.length; i++) {
+    this.program.set_arg_float(0, points[i].x/512);
+    this.program.set_arg_float(1, points[i].y/512);
+    this.pass_point();
+  }
+  for (var i = 0; i < springs.length; i++) {
+    this.program.set_arg_int(0, springs[i].anchorA);
+    this.program.set_arg_int(1, springs[i].anchorB);
+    this.program.set_arg_float(2, springs[i].distance);
+    this.program.set_arg_float(3, 3000);
+    this.program.set_arg_float(4, 0.15);
+    this.pass_spring();
+  }
   this.reset();
   this.steps = this.program.get_ret_int(0);
   console.log(this.steps);

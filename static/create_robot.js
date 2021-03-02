@@ -1,10 +1,11 @@
+let points = [];
+let springs = [];
+
 function user_create() {
     console.log("in robots");
     let canvas = document.getElementById("canvas");
     let context = canvas.getContext('2d');
 
-    let points = [];
-    let springs = [];
     let mouseX = -10;
     let mouseY = -10;
     let anchor = 0; // Record of the id of the points
@@ -58,14 +59,18 @@ function user_create() {
                 return;
             }
         });
-
         if (onPoint) {
             if (connectId != pointId && !findSpring(connectId, pointId)) {
-                springs.push({"anchorA":connectId, "anchorB":pointId});
+                let A = points.find(function(point) {return point.id == connectId});
+                let B = points.find(function(point) {return point.id == pointId});
+                let d = distance(A.x/512, A.y/512, B.x/512, B.y/512);
+                springs.push({"anchorA":connectId, "anchorB":pointId, "distance":d});
             }
         } else {
             if (connectId != anchor) {
-                springs.push({"anchorA":connectId, "anchorB":anchor});
+                let A = points.find(function(point) {return point.id == connectId});
+                let d = distance(A.x/512, A.y/512, mouseX/512, mouseY/512);
+                springs.push({"anchorA":connectId, "anchorB":anchor, "distance":d});
             }
             points.push({"x":mouseX, "y":mouseY, "id":anchor++});
         }
@@ -126,7 +131,7 @@ function user_create() {
             context.stroke();
         }
         window.requestAnimationFrame(draw);
-    }
+    } 
     draw();
 }
 

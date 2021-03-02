@@ -15,8 +15,8 @@ friction = 2.5
 gradient_clip = 1
 spring_omega = 10
 damping = 15
-n_objects = 14
-n_springs = 30
+n_objects = 50
+n_springs = 100
 n_sin_waves = 10
 n_hidden = 32
 n_input_states = n_sin_waves + 4 * n_objects + 2
@@ -31,8 +31,10 @@ pos = ti.Vector.field(2, float, max_num_particle)
 spring_anchor_a = ti.field(int, n_springs)
 spring_anchor_b = ti.field(int, n_springs)
 
-real_obj = ti.field(int, ())
-real_spring = ti.field(int, ())
+real_obj = ti.field(int, ()) ## used to store real num_obj
+real_spring = ti.field(int, ()) ## used to store real num_spring
+obj_mask = ti.field(int, n_objects)
+spring_mask = ti.field(int, n_springs)
 
 x = ti.Vector.field(2, float)
 v = ti.Vector.field(2, float)
@@ -124,42 +126,60 @@ def setup_robot():
     add_mesh_square(2, 2,    actuation = 0.15)
 
 @hub.kernel
+def set_mask():
+    real_obj[None] = 0
+    real_spring[None] = 0
+    for i in range(n_objects):
+        obj_mask[i] = 0
+    for i in range(n_springs):
+        spring_mask[i] = 0
+
+@hub.kernel
+def pass_point(a: float, b: float):
+    i = real_obj[None]
+    print("= ", i)
+    x[0, i][0] = a
+    x[0, i][1] = a
+    real_obj[None] += 1
+
+@hub.kernel
+def pass_spring(a: int, b: int, length: float, stiff: float, act: float):
+    i = real_spring[None]
+    spring_anchor_a[i] = a
+    spring_anchor_b[i] = b
+    spring_length[i] = length
+    spring_stiffness[i] = stiff
+    spring_actuation[i] = act
+    real_spring[None] += 1
+
+@hub.kernel
 def reset() -> int:
     goal[None] = [0.9, 0.2]
     loss[None] = 0
     loss.grad[None] = 1
     increase[None] = 0
-    real_obj[None] = n_objects
-    real_spring[None] = n_springs
 
-    setup_robot()
-    for i in ti.static(range(n_objects)):
-        x[0, i] = objects[i]
-
-    for i in ti.static(range(n_springs)):
-        spring_anchor_a[i] = springs[i][0]
-        spring_anchor_b[i] = springs[i][1]
-        spring_length[i] = springs[i][2]
-        spring_stiffness[i] = springs[i][3]
-        spring_actuation[i] = springs[i][4]
-
+    for i in range(real_obj[None]):
+        obj_mask[i] = 1
+    for i in range(real_spring[None]):
+        spring_mask[i] = 1
     return steps
 
 @hub.kernel
 def compute_center(t: int):
     for _ in range(1):
         c = ti.Vector([0.0, 0.0])
-        for i in ti.static(range(n_objects)):
-            c += x[t, i]
-        center[t] = (1.0 / n_objects) * c
+        for i in ti.static(range(n_objects)): ## Mask
+            c += x[t, i] * obj_mask[i]
+        center[t] = (1.0 / real_obj[None]) * c
 
 @hub.grad
 def compute_center_grad(t: int):
     for _ in range(1):
         c = ti.Vector([0.0, 0.0])
-        for i in ti.static(range(n_objects)):
-            c += x[t, i]
-        center[t] = (1.0 / n_objects) * c
+        for i in ti.static(range(n_objects)): ## Mask
+            c += x[t, i] * obj_mask[i]
+        center[t] = (1.0 / real_obj[None]) * c
 
 @hub.kernel
 def nn1(t: int):
@@ -167,15 +187,15 @@ def nn1(t: int):
         actuation = 0.0
         for j in ti.static(range(n_sin_waves)):
             actuation += weights1[i, j] * ti.sin(spring_omega * increase[None] * dt + 2 * math.pi / n_sin_waves * j)
-        for j in ti.static(range(n_objects)):
-            offset = x[t, j] - center[t]
+        for j in ti.static(range(n_objects)): ## Mask
+            offset = (x[t, j] - center[t]) * obj_mask[i]
             # use a smaller weight since there are too many of them
-            actuation += weights1[i, j * 4 + n_sin_waves] * offset[0] * 0.05
-            actuation += weights1[i, j * 4 + n_sin_waves + 1] * offset[1] * 0.05
-            actuation += weights1[i, j * 4 + n_sin_waves + 2] * v[t, j][0] * 0.05
-            actuation += weights1[i, j * 4 + n_sin_waves + 3] * v[t, j][1] * 0.05
-        actuation += weights1[i, n_objects * 4 + n_sin_waves] * (goal[None][0] - center[t][0])
-        actuation += weights1[i, n_objects * 4 + n_sin_waves + 1] * (goal[None][1] - center[t][1])
+            actuation += weights1[i, j * 4 + n_sin_waves] * offset[0] * 0.05 * obj_mask[i]
+            actuation += weights1[i, j * 4 + n_sin_waves + 1] * offset[1] * 0.05 * obj_mask[i]
+            actuation += weights1[i, j * 4 + n_sin_waves + 2] * v[t, j][0] * 0.05 * obj_mask[i]
+            actuation += weights1[i, j * 4 + n_sin_waves + 3] * v[t, j][1] * 0.05 * obj_mask[i]
+        actuation += weights1[i, real_obj[None] * 4 + n_sin_waves] * (goal[None][0] - center[t][0])
+        actuation += weights1[i, real_obj[None] * 4 + n_sin_waves + 1] * (goal[None][1] - center[t][1])
         actuation += bias1[i]
         actuation = ti.tanh(actuation)
         hidden[t, i] = actuation
@@ -186,22 +206,22 @@ def nn1_grad(t: int):
         actuation = 0.0
         for j in ti.static(range(n_sin_waves)):
             actuation += weights1[i, j] * ti.sin(spring_omega * increase[None] * dt + 2 * math.pi / n_sin_waves * j)
-        for j in ti.static(range(n_objects)):
-            offset = x[t, j] - center[t]
+        for j in ti.static(range(n_objects)): ## Mask
+            offset = (x[t, j] - center[t]) * obj_mask[i]
             # use a smaller weight since there are too many of them
-            actuation += weights1[i, j * 4 + n_sin_waves] * offset[0] * 0.05
-            actuation += weights1[i, j * 4 + n_sin_waves + 1] * offset[1] * 0.05
-            actuation += weights1[i, j * 4 + n_sin_waves + 2] * v[t, j][0] * 0.05
-            actuation += weights1[i, j * 4 + n_sin_waves + 3] * v[t, j][1] * 0.05
-        actuation += weights1[i, n_objects * 4 + n_sin_waves] * (goal[None][0] - center[t][0])
-        actuation += weights1[i, n_objects * 4 + n_sin_waves + 1] * (goal[None][1] - center[t][1])
+            actuation += weights1[i, j * 4 + n_sin_waves] * offset[0] * 0.05 * obj_mask[i]
+            actuation += weights1[i, j * 4 + n_sin_waves + 1] * offset[1] * 0.05 * obj_mask[i]
+            actuation += weights1[i, j * 4 + n_sin_waves + 2] * v[t, j][0] * 0.05 * obj_mask[i]
+            actuation += weights1[i, j * 4 + n_sin_waves + 3] * v[t, j][1] * 0.05 * obj_mask[i]
+        actuation += weights1[i, real_obj[None] * 4 + n_sin_waves] * (goal[None][0] - center[t][0])
+        actuation += weights1[i, real_obj[None] * 4 + n_sin_waves + 1] * (goal[None][1] - center[t][1])
         actuation += bias1[i]
         actuation = ti.tanh(actuation)
         hidden[t, i] = actuation
 
 @hub.kernel
 def nn2(t: int):
-    for i in range(n_springs):
+    for i in range(real_spring[None]):
         actuation = 0.0
         for j in ti.static(range(n_hidden)):
             actuation += weights2[i, j] * hidden[t, j]
@@ -211,7 +231,7 @@ def nn2(t: int):
 
 @hub.grad
 def nn2_grad(t: int):
-    for i in range(n_springs):
+    for i in range(real_spring[None]):
         actuation = 0.0
         for j in ti.static(range(n_hidden)):
             actuation += weights2[i, j] * hidden[t, j]
@@ -221,7 +241,7 @@ def nn2_grad(t: int):
 
 @hub.kernel
 def apply_spring_force(t: int):
-    for i in range(n_springs):
+    for i in range(real_spring[None]):
         a = spring_anchor_a[i]
         b = spring_anchor_b[i]
         pos_a = x[t, a]
@@ -237,7 +257,7 @@ def apply_spring_force(t: int):
 
 @hub.grad
 def apply_spring_force_grad(t: int):
-    for i in range(n_springs):
+    for i in range(real_spring[None]):
         a = spring_anchor_a[i]
         b = spring_anchor_b[i]
         pos_a = x[t, a]
@@ -253,7 +273,7 @@ def apply_spring_force_grad(t: int):
 
 @hub.kernel
 def advance_toi(t: int):
-    for i in range(n_objects):
+    for i in range(real_obj[None]):
         s = ti.exp(-dt * damping)
         old_v = s * v[t - 1, i] + dt * gravity * ti.Vector([0.0, 1.0]) + v_inc[t, i]
         old_x = x[t - 1, i]
@@ -270,7 +290,7 @@ def advance_toi(t: int):
 
 @hub.grad
 def advance_toi_grad(t: int):
-    for i in range(n_objects):
+    for i in range(real_obj[None]):
         s = ti.exp(-dt * damping)
         old_v = s * v[t - 1, i] + dt * gravity * ti.Vector([0.0, 1.0]) + v_inc[t, i]
         old_x = x[t - 1, i]
@@ -287,7 +307,7 @@ def advance_toi_grad(t: int):
 
 @hub.kernel
 def advance_no_toi(t: int):
-    for i in range(n_objects):
+    for i in range(real_obj[None]):
         s = ti.exp(-dt * damping)
         old_v = s * v[t - 1, i] + dt * gravity * ti.Vector([0.0, 1.0]) + v_inc[t, i]
         old_x = x[t - 1, i]
@@ -303,7 +323,7 @@ def advance_no_toi(t: int):
 
 @hub.grad
 def advance_no_toi_grad(t: int):
-    for i in range(n_objects):
+    for i in range(real_obj[None]):
         s = ti.exp(-dt * damping)
         old_v = s * v[t - 1, i] + dt * gravity * ti.Vector([0.0, 1.0]) + v_inc[t, i]
         old_x = x[t - 1, i]
@@ -329,12 +349,12 @@ def compute_loss_grad(t: int):
 def clear_states():
     increase[None] = 0
     for t in range(0, max_steps):
-        for i in range(0, n_objects):
+        for i in range(0, real_obj[None]):
             v_inc[t, i] = ti.Vector([0.0, 0.0])
 
 @hub.kernel
 def render(t: int):
-    for i in range(n_objects):
+    for i in range(real_obj[None]):
         pos[i] = x[t, i]
 
 @hub.kernel
@@ -348,36 +368,36 @@ def clear_gradients():
     goal[None] = [0.9, 0.2]
     goal.grad[None] = ti.Vector([0.0, 0.0])
     for i in range(n_hidden):
-        for j in range(n_input_states):
+        for j in range(n_sin_waves + 4 * real_obj[None] + 2):
             weights1.grad[i, j] = 0.0
         bias1.grad[i] = 0.0
-    for i in range(n_springs):
+    for i in range(real_spring[None]):
         for j in range(n_hidden):
             weights2.grad[i, j] = 0.0
         bias2.grad[i] = 0.0
     for i in range(max_steps):
         center.grad[i] = ti.Vector([0.0, 0.0])
-        for j in range(n_objects):
+        for j in range(real_obj[None]):
             x.grad[i, j] = ti.Vector([0.0, 0.0])
             v.grad[i, j] = ti.Vector([0.0, 0.0])
             v_inc.grad[i, j] = ti.Vector([0.0, 0.0])
-        for j in range(n_springs):
+        for j in range(real_spring[None]):
             act.grad[i, j] = 0.0
         for j in range(n_hidden):
             hidden.grad[i, j] = 0.0
-    for i in range(n_springs):
+    for i in range(real_spring[None]):
         spring_length.grad[i] = 0.0
         spring_stiffness.grad[i] = 0.0
         spring_actuation.grad[i] = 0.0
 
 @hub.kernel
 def copy_status():
-    for i in range(n_objects):
+    for i in range(real_obj[None]):
         x[0, i] = x[1, i]
         v[0, i] = v[1, i]
         v_inc[0, i] = ti.Vector([0, 0])
         v_inc[1, i] = ti.Vector([0, 0])
-    for i in range(n_springs):
+    for i in range(real_spring[None]):
         act[0, i] = 0.0
     for i in range(n_hidden):
         hidden[0, i] = 0.0
@@ -386,41 +406,41 @@ def copy_status():
 @hub.kernel
 def optimize():
     for i in range(n_hidden):
-        for j in range(n_sin_waves + 4 * n_objects + 2):
-            weights1[i, j] = ti.random() * ti.sqrt(2 / (n_hidden + (n_sin_waves + 4 * n_objects + 2))) * 2
+        for j in range(n_sin_waves + 4 * real_obj[None] + 2):
+            weights1[i, j] = ti.random() * ti.sqrt(2 / (n_hidden + (n_sin_waves + 4 * real_obj[None] + 2))) * 2
 
-    for i in range(n_springs):
+    for i in range(real_spring[None]):
         for j in range(n_hidden):
             # TODO: n_springs should be n_actuators
-            weights2[i, j] = ti.random() * ti.sqrt(2 / (n_hidden + n_springs)) * 3
+            weights2[i, j] = ti.random() * ti.sqrt(2 / (n_hidden + real_spring[None])) * 3
         
 @hub.kernel
 def optimize1(iter: int) -> float:
-    print('Iter=', iter, 'Loss=', loss[None])
+    #print('Iter=', iter, 'Loss=', loss[None])
 
     total_norm_sqr = 0.0
     for i in range(n_hidden):
-        for j in range(n_sin_waves + 4 * n_objects + 2):
+        for j in range(n_sin_waves + 4 * real_obj[None] + 2):
             total_norm_sqr += weights1.grad[i, j]**2
         total_norm_sqr += bias1.grad[i]**2
 
-    for i in range(n_springs):
+    for i in range(real_spring[None]):
         for j in range(n_hidden):
             total_norm_sqr += weights2.grad[i, j]**2
         total_norm_sqr += bias2.grad[i]**2
 
-    print('TNS = ', total_norm_sqr)
+    #print('TNS = ', total_norm_sqr)
 
     gradient_clip = 0.2
     learning_rate = 25
     ## scale = learning_rate * min(1.0, gradient_clip / total_norm_sqr ** 0.5)
     scale = gradient_clip / (total_norm_sqr**0.5 + 1e-6)
     for i in range(n_hidden):
-        for j in range(n_sin_waves + 4 * n_objects + 2):
+        for j in range(n_sin_waves + 4 * real_obj[None] + 2):
             weights1[i, j] -= scale * weights1.grad[i, j]
         bias1[i] -= scale * bias1.grad[i]
 
-    for i in range(n_springs):
+    for i in range(real_spring[None]):
         for j in range(n_hidden):
             weights2[i, j] -= scale * weights2.grad[i, j]
         bias2[i] -= scale * bias2.grad[i]
