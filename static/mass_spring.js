@@ -66,7 +66,7 @@ play() {
     this.program.set_arg_int(0, springs[i].anchorA);
     this.program.set_arg_int(1, springs[i].anchorB);
     this.program.set_arg_float(2, springs[i].distance);
-    this.program.set_arg_float(3, 3000);
+    this.program.set_arg_float(3, 1000);
     this.program.set_arg_float(4, 0.15);
     this.pass_spring();
   }

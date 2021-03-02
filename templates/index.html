@@ -19,19 +19,26 @@
         <button id="train" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
         Train
         </button>
+        <button id="grid" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+        ToggleGrid
+        </button>
   
         <script src="/create_robot.js"></script>
         <script src="/mass_spring.js"></script>
         <script src="/taichi.js"></script>
         <script>
             var train_button = document.getElementById("train");
-            
             train_button.onclick = function() {
-                console.log("clicked");
                 var mass_spring = {};
                 var canvas = document.getElementById("canvas");
                 mass_spring = new MassSpring(canvas);
                 mass_spring.loadScript('/compiled.js');
+            }
+        </script>
+        <script>
+            var grid_button = document.getElementById("grid");
+            grid_button.onclick = function() {
+                is_grid = !is_grid;
             }
         </script>
     </body>

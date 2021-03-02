@@ -1,5 +1,6 @@
 let points = [];
 let springs = [];
+let is_grid = true;
 
 function user_create() {
     console.log("in robots");
@@ -12,6 +13,15 @@ function user_create() {
     let radius = 5;
     let mouseDown = false;
     let connectId = -1; // Temp id of the connecting spring
+    let interval_h = canvas.width / 20;
+    let interval_v = canvas.height / 20;
+    let grid = [];
+
+    for(var i = 1; i < 20; i++) {
+        for(var j = 1; j < 20; j++) {
+            grid.push({"x":interval_h*i, "y":interval_v*j});
+        }
+    }
 
     canvas.onmousemove = function(event) {
         mouseX = event.clientX;
@@ -29,9 +39,18 @@ function user_create() {
     canvas.onmousedown = function(event) {
         let onPoint = false;
         let pointId = -1;
+        let curX = mouseX;
+        let curY = mouseY;
+
+        if (is_grid) {
+            let temp = getClosest(curX, curY);
+            curX = temp.x;
+            curY = temp.y;
+        }
+
         mouseDown = true;
         points.forEach(function(point) {
-            if (distance(point.x, point.y, mouseX, mouseY) <= radius * 2) {
+            if (distance(point.x, point.y, curX, curY) <= radius * 2) {
                 onPoint = true;
                 pointId = point.id;
                 return;
@@ -44,16 +63,25 @@ function user_create() {
         } else {
             // Create a point and connect to another
             connectId = anchor;
-            points.push({"x":mouseX, "y":mouseY, "id":anchor++});
+            points.push({"x":curX, "y":curY, "id":anchor++});
         }
     }
 
     canvas.onmouseup = function(event) {
         mouseDown = false;
+        let curX = mouseX;
+        let curY = mouseY;
         let onPoint = false;
         let pointId = -1;
+
+        if (is_grid) {
+            let temp = getClosest(curX, curY);
+            curX = temp.x;
+            curY = temp.y;
+        }
+
         points.forEach(function(point) {
-            if (distance(point.x, point.y, mouseX, mouseY) <= radius * 2) {
+            if (distance(point.x, point.y, curX, curY) <= radius * 2) {
                 onPoint = true;
                 pointId = point.id;
                 return;
@@ -69,10 +97,10 @@ function user_create() {
         } else {
             if (connectId != anchor) {
                 let A = points.find(function(point) {return point.id == connectId});
-                let d = distance(A.x/512, A.y/512, mouseX/512, mouseY/512);
+                let d = distance(A.x/512, A.y/512, curX/512, curY/512);
                 springs.push({"anchorA":connectId, "anchorB":anchor, "distance":d});
             }
-            points.push({"x":mouseX, "y":mouseY, "id":anchor++});
+            points.push({"x":curX, "y":curY, "id":anchor++});
         }
     }
 
@@ -99,9 +127,43 @@ function user_create() {
         return found;
     }
 
+    function getClosest(x, y) {
+        let min = 10000;
+        let close;
+        for (var i = 0; i < grid.length; i++) {
+            let temp = distance(x, y, grid[i].x, grid[i].y);
+            if (temp <= min) {
+                min = temp;
+                close = grid[i];
+            }
+        }
+        return close;
+    }
+
     function draw() {
         context.fillStyle = "white";
         context.fillRect(0, 0, canvas.width, canvas.height);
+
+        if (is_grid) {
+            for(var i = 0; i < 20; i++) {
+                context.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+                context.lineWidth = 1;
+                context.beginPath();
+                context.moveTo(interval_h*i, 0);
+                context.lineTo(interval_h*i, canvas.height);
+                context.closePath();
+                context.stroke();
+            }
+            for(var i = 0; i < 20; i++) {
+                context.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+                context.lineWidth = 1;
+                context.beginPath();
+                context.moveTo(0, interval_v*i);
+                context.lineTo(canvas.width, interval_v*i);
+                context.closePath();
+                context.stroke();
+            }
+        }
 
         points.forEach(function(point) {
             context.fillStyle = "black";
@@ -115,6 +177,7 @@ function user_create() {
             let anchorA = points.find(function(point) {return point.id == spring.anchorA});
             let anchorB = points.find(function(point) {return point.id == spring.anchorB});
             context.strokeStyle = "black";
+            context.lineWidth = 3;
             context.beginPath();
             context.moveTo(anchorA.x, anchorA.y);
             context.lineTo(anchorB.x, anchorB.y);
