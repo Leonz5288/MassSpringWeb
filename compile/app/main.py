@@ -137,7 +137,6 @@ def set_mask():
 @hub.kernel
 def pass_point(a: float, b: float):
     i = real_obj[None]
-    print("= ", i)
     x[0, i][0] = a
     x[0, i][1] = a
     real_obj[None] += 1
