@@ -15,7 +15,7 @@ play() {
   console.log("play()");
   this.terminate();
 
-  this.gui = new TaichiGUI(this.canvas, 512);
+  this.gui = new TaichiGUI(this.canvas, this.canvas.width, this.canvas.height);
 
   this.reset = this.program.get("reset");
   this.render = this.program.get("render");
@@ -150,7 +150,7 @@ onUpdate() {
     var pos2 = [extr[anchor_b[i] * 2], extr[anchor_b[i] * 2 + 1]];
     this.gui.line(pos1, pos2);
   }
-  this.gui.line([0.01, 0.1], [0.99, 0.1]);
+  this.gui.line([0.01, 0.1], [1.99, 0.1]);
 }
 
 substep() {

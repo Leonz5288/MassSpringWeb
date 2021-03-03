@@ -147,7 +147,7 @@ class TaichiGUI {
         this.ctx.fillRect(0, 0, this.resx, this.resy);
         this.ctx.fillStyle = 'black';
         for (let i = 0; i < pos.length;) {
-            let x = (pos[i++]/1.0 * this.resx) % this.resx;
+            let x = (pos[i++]/2.0 * this.resx) % this.resx;
             let y = this.resy - ((pos[i++]/1.0 * this.resy) % this.resy);
             this.ctx.beginPath();
             this.ctx.arc(x, y, radius, 0, 2 * Math.PI);
@@ -157,10 +157,10 @@ class TaichiGUI {
 
     line(pos1, pos2) {
         //this.ctx.fillStyle = 'white';
-        let x1 = (pos1[0]/1.0 * this.resx) % this.resx;
-        let y1 = this.resy - ((pos1[1]/1.0 * this.resx) % this.resy);
-        let x2 = (pos2[0]/1.0 * this.resx) % this.resx;
-        let y2 = this.resy - ((pos2[1]/1.0 * this.resx) % this.resy);
+        let x1 = (pos1[0]/2.0 * this.resx) % this.resx;
+        let y1 = this.resy - ((pos1[1]/1.0 * this.resy) % this.resy);
+        let x2 = (pos2[0]/2.0 * this.resx) % this.resx;
+        let y2 = this.resy - ((pos2[1]/1.0 * this.resy) % this.resy);
         this.ctx.beginPath();
         this.ctx.moveTo(x1, y1);
         this.ctx.lineTo(x2, y2);

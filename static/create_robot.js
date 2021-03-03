@@ -13,11 +13,11 @@ function user_create() {
     let radius = 5;
     let mouseDown = false;
     let connectId = -1; // Temp id of the connecting spring
-    let interval_h = canvas.width / 20;
+    let interval_h = canvas.width / 40;
     let interval_v = canvas.height / 20;
     let grid = [];
 
-    for(var i = 1; i < 20; i++) {
+    for(var i = 1; i < 40; i++) {
         for(var j = 1; j < 20; j++) {
             grid.push({"x":interval_h*i, "y":interval_v*j});
         }
@@ -145,7 +145,7 @@ function user_create() {
         context.fillRect(0, 0, canvas.width, canvas.height);
 
         if (is_grid) {
-            for(var i = 0; i < 20; i++) {
+            for(var i = 0; i < 40; i++) {
                 context.strokeStyle = 'rgba(0, 0, 0, 0.3)';
                 context.lineWidth = 1;
                 context.beginPath();
