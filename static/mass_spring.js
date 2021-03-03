@@ -59,14 +59,14 @@ play() {
   this.set_mask();
   for (var i = 0; i < points.length; i++) {
     this.program.set_arg_float(0, points[i].x/512);
-    this.program.set_arg_float(1, points[i].y/512);
+    this.program.set_arg_float(1, 1-points[i].y/512);
     this.pass_point();
   }
   for (var i = 0; i < springs.length; i++) {
     this.program.set_arg_int(0, springs[i].anchorA);
     this.program.set_arg_int(1, springs[i].anchorB);
     this.program.set_arg_float(2, springs[i].distance);
-    this.program.set_arg_float(3, 1000);
+    this.program.set_arg_float(3, 2000);
     this.program.set_arg_float(4, 0.15);
     this.pass_spring();
   }
@@ -115,7 +115,7 @@ play() {
     this.program.set_arg_int(0, iter);
     this.optimize1();
     this.loss.push(this.program.get_ret_float(0));
-  }
+   }
 
   this.clear_states();
 
