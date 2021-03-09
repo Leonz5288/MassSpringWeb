@@ -122,6 +122,7 @@ function user_create() {
             }
             points.push({"x":curX, "y":curY, "id":anchor++});
         }
+        adjust();
     }
 
     function deleteSpring(x, y) {
@@ -146,6 +147,7 @@ function user_create() {
             }
             points.splice(id, 1);
             anchor--;
+            adjust();
         }
     }
 
@@ -155,6 +157,19 @@ function user_create() {
 
     function findPoint(point) {
         return point.id == connectId;
+    }
+
+    function adjust() {
+        // Adjust point's id and spring's anchors
+        springs.forEach(function(spring) {
+            let ptA = points.find(function(point) {return point.id == spring.anchorA});
+            let ptB = points.find(function(point) {return point.id == spring.anchorB});
+            spring.anchorA = points.indexOf(ptA);
+            spring.anchorB = points.indexOf(ptB);
+        });
+        points.forEach(function(point) {
+            point.id = points.indexOf(point);
+        });
     }
 
     function findSpring(a, b) {
