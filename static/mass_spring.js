@@ -1,6 +1,7 @@
+paused = true;
+
 class MassSpring {
   constructor(canvas) {
-    this.paused = false;
     this.frame = 1;
     this.steps = 0;
         
@@ -152,9 +153,11 @@ onUpdate() {
 
 substep() {
   this.program.set_arg_int(0, 0);
-  this.compute_center();
-  this.nn1();
-  this.nn2();
+  if (!paused) {
+    this.compute_center();
+    this.nn1();
+    this.nn2();
+  }
   this.apply_spring_force();
   this.program.set_arg_int(0, 1);
   this.advance_toi();
@@ -163,9 +166,6 @@ substep() {
 }
 
 perFrame() {
-  if (this.paused)
-    return;
-
   if((Date.now() - this.last_time) >= 1000) {
     this.last_time = Date.now();
     this.fps = 0;
@@ -178,6 +178,16 @@ terminate() {
   this.frame = 0;
   if (typeof this.gui != "undefined") this.gui.stopped = true;
   this.gui = undefined;
+  document.addEventListener('keydown', function(event) {
+    if(event.key == "ArrowRight") {
+        paused = false;
+    }
+  });
+  document.addEventListener('keyup', function(event) {
+    if(event.key == "ArrowRight") {
+      paused = true;
+    }
+  });
 }
 
 loadScript(url) {
