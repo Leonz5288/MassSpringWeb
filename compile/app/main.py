@@ -6,7 +6,7 @@ import hub
 max_steps = 4096
 vis_interval = 256
 output_vis_interval = 8
-steps = 2048 // 3
+steps = 1024
 assert steps * 2 <= max_steps
 head_id = 0
 elasticity = 0.0
@@ -64,67 +64,6 @@ points = []
 point_id = []
 mesh_springs = []
 
-def add_object(x):
-    objects.append(x)
-    return len(objects) - 1
-
-def add_spring(a, b, length=None, stiffness=1, actuation=0.1):
-    if length == None:
-        length = ((objects[a][0] - objects[b][0])**2 +
-                  (objects[a][1] - objects[b][1])**2)**0.5
-    springs.append([a, b, length, stiffness, actuation])
-
-def add_mesh_point(i, j):
-    if (i, j) not in points:
-        id = add_object((i * 0.05 + 0.1, j * 0.05 + 0.1))
-        points.append((i, j))
-        point_id.append(id)
-    return point_id[points.index((i, j))]
-
-def add_mesh_spring(a, b, s, ac):
-    if (a, b) in mesh_springs or (b, a) in mesh_springs:
-        return
-
-    mesh_springs.append((a, b))
-    add_spring(a, b, stiffness=s, actuation=ac)
-
-
-def add_mesh_square(i, j, actuation=0.0):
-    a = add_mesh_point(i, j)
-    b = add_mesh_point(i, j + 1)
-    c = add_mesh_point(i + 1, j)
-    d = add_mesh_point(i + 1, j + 1)
-
-    # b d
-    # a c
-    add_mesh_spring(a, b, 3e4, actuation)
-    add_mesh_spring(c, d, 3e4, actuation)
-
-    for i in [a, b, c, d]:
-        for j in [a, b, c, d]:
-            if i != j:
-                add_mesh_spring(i, j, 3e4, 0)
-
-
-def add_mesh_triangle(i, j, actuation=0.0):
-    a = add_mesh_point(i + 0.5, j + 0.5)
-    b = add_mesh_point(i, j + 1)
-    d = add_mesh_point(i + 1, j + 1)
-
-    for i in [a, b, d]:
-        for j in [a, b, d]:
-            if i != j:
-                add_mesh_spring(i, j, 3e4, 0)
-
-def setup_robot():
-    add_mesh_triangle(2, 0, actuation=0.15)
-    add_mesh_triangle(0, 0, actuation=0.15)
-    add_mesh_square(0, 1, actuation=0.15)
-    add_mesh_square(0, 2,    actuation = 0.15)
-    add_mesh_square(1, 2,    actuation = 0.15)
-    add_mesh_square(2, 1, actuation=0.15)
-    add_mesh_square(2, 2,    actuation = 0.15)
-
 @hub.kernel
 def set_mask():
     real_obj[None] = 0
@@ -153,7 +92,7 @@ def pass_spring(a: int, b: int, length: float, stiff: float, act: float):
 
 @hub.kernel
 def reset() -> int:
-    goal[None] = [0.9, 0.2]
+    goal[None] = [1.9, 0.2]
     loss[None] = 0
     loss.grad[None] = 1
     increase[None] = 0
@@ -168,7 +107,7 @@ def reset() -> int:
 def compute_center(t: int):
     for _ in range(1):
         c = ti.Vector([0.0, 0.0])
-        for i in ti.static(range(n_objects)): ## Mask
+        for i in ti.static(range(n_objects)):
             c += x[t, i] * obj_mask[i]
         center[t] = (1.0 / real_obj[None]) * c
 
@@ -176,7 +115,7 @@ def compute_center(t: int):
 def compute_center_grad(t: int):
     for _ in range(1):
         c = ti.Vector([0.0, 0.0])
-        for i in ti.static(range(n_objects)): ## Mask
+        for i in ti.static(range(n_objects)):
             c += x[t, i] * obj_mask[i]
         center[t] = (1.0 / real_obj[None]) * c
 
@@ -186,7 +125,7 @@ def nn1(t: int):
         actuation = 0.0
         for j in ti.static(range(n_sin_waves)):
             actuation += weights1[i, j] * ti.sin(spring_omega * increase[None] * dt + 2 * math.pi / n_sin_waves * j)
-        for j in ti.static(range(n_objects)): ## Mask
+        for j in ti.static(range(n_objects)):
             offset = (x[t, j] - center[t]) * obj_mask[i]
             # use a smaller weight since there are too many of them
             actuation += weights1[i, j * 4 + n_sin_waves] * offset[0] * 0.05 * obj_mask[i]
@@ -205,7 +144,7 @@ def nn1_grad(t: int):
         actuation = 0.0
         for j in ti.static(range(n_sin_waves)):
             actuation += weights1[i, j] * ti.sin(spring_omega * increase[None] * dt + 2 * math.pi / n_sin_waves * j)
-        for j in ti.static(range(n_objects)): ## Mask
+        for j in ti.static(range(n_objects)):
             offset = (x[t, j] - center[t]) * obj_mask[i]
             # use a smaller weight since there are too many of them
             actuation += weights1[i, j * 4 + n_sin_waves] * offset[0] * 0.05 * obj_mask[i]
@@ -301,38 +240,6 @@ def advance_toi_grad(t: int):
             new_v = ti.Vector([0.0, 0.0])
         new_x = old_x + toi * old_v + (dt - toi) * new_v
 
-        v[t, i] = new_v
-        x[t, i] = new_x
-
-@hub.kernel
-def advance_no_toi(t: int):
-    for i in range(real_obj[None]):
-        s = ti.exp(-dt * damping)
-        old_v = s * v[t - 1, i] + dt * gravity * ti.Vector([0.0, 1.0]) + v_inc[t, i]
-        old_x = x[t - 1, i]
-        new_v = old_v
-        depth = old_x[1] - ground_height
-        if depth < 0 and new_v[1] < 0:
-            # friction projection
-            new_v[0] = 0
-            new_v[1] = 0
-        new_x = old_x + dt * new_v
-        v[t, i] = new_v
-        x[t, i] = new_x
-
-@hub.grad
-def advance_no_toi_grad(t: int):
-    for i in range(real_obj[None]):
-        s = ti.exp(-dt * damping)
-        old_v = s * v[t - 1, i] + dt * gravity * ti.Vector([0.0, 1.0]) + v_inc[t, i]
-        old_x = x[t - 1, i]
-        new_v = old_v
-        depth = old_x[1] - ground_height
-        if depth < 0 and new_v[1] < 0:
-            # friction projection
-            new_v[0] = 0
-            new_v[1] = 0
-        new_x = old_x + dt * new_v
         v[t, i] = new_v
         x[t, i] = new_x
 

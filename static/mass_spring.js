@@ -1,5 +1,3 @@
-// import springs from "./create_robot.js"
-// import points from "./create_robot.js"
 class MassSpring {
   constructor(canvas) {
     this.paused = false;
@@ -72,7 +70,6 @@ play() {
   }
   this.reset();
   this.steps = this.program.get_ret_int(0);
-  console.log(this.steps);
 
   this.optimize();
   for (var iter = 0; iter < 70; iter++) {
