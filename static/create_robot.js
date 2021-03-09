@@ -17,11 +17,25 @@ function user_create() {
     let interval_v = canvas.height / 20;
     let grid = [];
 
+    let delete_mode = false;
+
     for(var i = 1; i < 40; i++) {
         for(var j = 1; j < 20; j++) {
             grid.push({"x":interval_h*i, "y":interval_v*j});
         }
     }
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key == "d") {
+            delete_mode = true;
+        }
+    });
+
+    document.addEventListener('keyup', function(event) {
+        if (event.key == "d") {
+            delete_mode = false;
+        }
+    });
 
     canvas.onmousemove = function(event) {
         mouseX = event.clientX;
@@ -41,6 +55,11 @@ function user_create() {
         let pointId = -1;
         let curX = mouseX;
         let curY = mouseY;
+        // In delete mode, delete spring instead of adding.
+        if (delete_mode) {
+            deleteSpring(curX, curY);
+            return;
+        }
 
         if (is_grid) {
             let temp = getClosest(curX, curY);
@@ -68,6 +87,7 @@ function user_create() {
     }
 
     canvas.onmouseup = function(event) {
+        if (delete_mode) return;
         mouseDown = false;
         let curX = mouseX;
         let curY = mouseY;
@@ -101,6 +121,31 @@ function user_create() {
                 springs.push({"anchorA":connectId, "anchorB":anchor, "distance":d});
             }
             points.push({"x":curX, "y":curY, "id":anchor++});
+        }
+    }
+
+    function deleteSpring(x, y) {
+        let id = -1;
+        let anchor = -1;
+        points.forEach(function(point) {
+            if (distance(point.x, point.y, x, y) <= radius * 2) {
+                id = points.indexOf(point);
+                anchor = point.id;
+                return;
+            }
+        });
+        if (id != -1) {
+            let s_id = [];
+            springs.forEach(function(spring) {
+                if (spring.anchorA == anchor || spring.anchorB == anchor) {
+                    s_id.push(springs.indexOf(spring));
+                }
+            });
+            for (var i = s_id.length-1; i >= 0; i--) {
+                springs.splice(s_id[i], 1);
+            }
+            points.splice(id, 1);
+            anchor--;
         }
     }
 
