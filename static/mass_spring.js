@@ -81,7 +81,7 @@ class MassSpring {
       direction = _;
       this.program.set_arg_int(0, direction);
       this.optimize();
-      for (var iter = 0; iter < 70; iter++) {
+      for (var iter = 0; iter < 100; iter++) {
         this.clear_states();
         this.program.set_arg_int(0, direction);
         this.clear_gradients();
