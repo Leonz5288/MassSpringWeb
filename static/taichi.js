@@ -143,8 +143,6 @@ class TaichiGUI {
 
     circles(pos, radius) {
         radius = 5;
-        this.ctx.fillStyle = 'white';
-        this.ctx.fillRect(0, 0, this.resx, this.resy);
         this.ctx.fillStyle = 'black';
         for (let i = 0; i < pos.length;) {
             let x = (pos[i++]/2.0 * this.resx) % this.resx;
@@ -156,7 +154,6 @@ class TaichiGUI {
     }
 
     line(pos1, pos2) {
-        //this.ctx.fillStyle = 'white';
         let x1 = (pos1[0]/2.0 * this.resx) % this.resx;
         let y1 = this.resy - ((pos1[1]/1.0 * this.resy) % this.resy);
         let x2 = (pos2[0]/2.0 * this.resx) % this.resx;
@@ -165,6 +162,13 @@ class TaichiGUI {
         this.ctx.moveTo(x1, y1);
         this.ctx.lineTo(x2, y2);
         this.ctx.stroke();
+    }
+
+    ground() {
+        this.ctx.fillStyle = 'white';
+        this.ctx.fillRect(0, 0, this.resx, this.resy);
+        this.ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+        this.ctx.fillRect(0, 0.9*this.resy, this.resx, this.resy);
     }
 }
 

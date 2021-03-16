@@ -201,8 +201,11 @@ function user_create() {
     }
 
     function draw() {
-        context.fillStyle = "white";
+        context.fillStyle = "rgb(255, 255, 255)";
         context.fillRect(0, 0, canvas.width, canvas.height);
+
+        context.fillStyle = "rgba(0, 0, 0, 0.6)";
+        context.fillRect(0, 0.9*canvas.height, canvas.width, canvas.height);
 
         if (is_grid) {
             for(var i = 0; i < 40; i++) {
@@ -210,11 +213,11 @@ function user_create() {
                 context.lineWidth = 1;
                 context.beginPath();
                 context.moveTo(interval_h*i, 0);
-                context.lineTo(interval_h*i, canvas.height);
+                context.lineTo(interval_h*i, 0.85*canvas.height);
                 context.closePath();
                 context.stroke();
             }
-            for(var i = 0; i < 20; i++) {
+            for(var i = 0; i < 18; i++) {
                 context.strokeStyle = 'rgba(0, 0, 0, 0.3)';
                 context.lineWidth = 1;
                 context.beginPath();

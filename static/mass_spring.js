@@ -150,13 +150,14 @@ class MassSpring {
     var num = this.program.get_ret_int(0);
     let extr = this.program.set_ext_arr_float(0, [num, 2]);
     this.export_data();
+
+    this.gui.ground();
     this.gui.circles(extr);
     for (let i = 0; i < num_spring; i++) {
       var pos1 = [extr[anchor_a[i] * 2], extr[anchor_a[i] * 2 + 1]];
       var pos2 = [extr[anchor_b[i] * 2], extr[anchor_b[i] * 2 + 1]];
       this.gui.line(pos1, pos2);
     }
-    this.gui.line([0.01, 0.1], [1.99, 0.1]);
   }
 
   substep() {
