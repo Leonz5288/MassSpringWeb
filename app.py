@@ -16,13 +16,17 @@ def taichi_js():
 def ms_js():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'mass_spring.js')
 
-@app.route('/compiled.js')
-def compiled():
-    return send_from_directory(os.path.join(app.root_path, 'static'), 'compiled.js', cache_timeout=0)
-
 @app.route('/create_robot.js')
 def robot():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'create_robot.js')
+
+@app.route('/chart.js')
+def creat_chart():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'chart.js')
+
+@app.route('/compiled.js')
+def compiled():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'compiled.js', cache_timeout=0)
 
 @app.route('/app.wasm')
 def wasm():
