@@ -2,6 +2,7 @@ let points = [];
 let springs = [];
 let is_grid = true;
 let draw_box = false;
+let delete_mode = false;
 
 function user_create() {
     console.log("in robots");
@@ -18,31 +19,29 @@ function user_create() {
     let interval_v = canvas.height / 20;
     let grid = [];
 
-    let delete_mode = false;
-
     for(var i = 1; i < 40; i++) {
         for(var j = 1; j < 20; j++) {
             grid.push({"x":interval_h*i, "y":interval_v*j});
         }
     }
 
-    document.addEventListener('keydown', function(event) {
-        if (event.key == "d") {
-            delete_mode = true;
-        }
-        if (event.key == "b") {
-            draw_box = true;
-        }
-    });
+    // document.addEventListener('keydown', function(event) {
+    //     if (event.key == "d") {
+    //         delete_mode = true;
+    //     }
+    //     if (event.key == "b") {
+    //         draw_box = true;
+    //     }
+    // });
 
-    document.addEventListener('keyup', function(event) {
-        if (event.key == "d") {
-            delete_mode = false;
-        }
-        if (event.key == "b") {
-            draw_box = false;
-        }
-    });
+    // document.addEventListener('keyup', function(event) {
+    //     if (event.key == "d") {
+    //         delete_mode = false;
+    //     }
+    //     if (event.key == "b") {
+    //         draw_box = false;
+    //     }
+    // });
 
     canvas.onmousemove = function(event) {
         mouseX = event.clientX;
@@ -94,7 +93,6 @@ function user_create() {
                     }
                 }
             }
-            console.log(springs);
             return;
         }
 
@@ -255,16 +253,16 @@ function user_create() {
         return ret;
     }
 
-    function draw_point(point) {
-        context.fillStyle = "black";
+    function draw_point(point, color="black") {
+        context.fillStyle = color;
         context.beginPath();
         context.arc(point.x, point.y, radius, 0, Math.PI*2);
         context.closePath();
         context.fill();
     }
 
-    function draw_line(anchorA, anchorB) {
-        context.strokeStyle = "black";
+    function draw_line(anchorA, anchorB, color="black") {
+        context.strokeStyle = color;
         context.lineWidth = 3;
         context.beginPath();
         context.moveTo(anchorA.x, anchorA.y);
@@ -315,14 +313,35 @@ function user_create() {
             context.globalAlpha = 1;
         }
 
-        points.forEach(function(point) {
-            draw_point(point);
-        });
+        // Under delete mode, draw the points and lines to be deleted in red.
+        let delete_id = -1;
+        if (delete_mode) {
+            points.forEach(function(point) {
+                if (distance(point.x, point.y, mouseX, mouseY) <= radius * 2) {
+                    delete_id = points.indexOf(point);
+                    return;
+                }
+            });
+        }
 
         springs.forEach(function(spring) {
             let anchorA = points.find(function(point) {return point.id == spring.anchorA});
             let anchorB = points.find(function(point) {return point.id == spring.anchorB});
-            draw_line(anchorA, anchorB);
+            if (delete_id != -1 && (anchorA.id == delete_id || anchorB.id == delete_id)) {
+                draw_line(anchorA, anchorB, "red");
+            }
+            else {
+                draw_line(anchorA, anchorB);
+            }
+        });
+
+        points.forEach(function(point) {
+            if (delete_id == point.id) {
+                draw_point(point, "red");
+            }
+            else {
+                draw_point(point);
+            }
         });
 
         if (mouseDown) {

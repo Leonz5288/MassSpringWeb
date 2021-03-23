@@ -28,7 +28,7 @@
       </div>
     </header>
     <main class="mdl-layout__content">
-      <body style="background-color: rgb(200, 200, 200)">
+      <body style="background-color: rgb(245, 245, 245)">
         <div class="mdl-grid">
           <div class="mdl-cell mdl-cell--2-col", style="margin-left: 3%;">
             <button
@@ -65,11 +65,11 @@
         </div>
         <div class="mdl-grid">
           <div class="mdl-cell mdl-cell--8-col">
-            <canvas id="canvas" height="512" width="1024"></canvas>
+            <canvas id="canvas" height="512" width="1024" style="border:3px solid rgb(0, 0, 0); border-radius:15px;"></canvas>
           </div>
-          <div class="mdl-cell mdl-cell--4-col">
-            <div class="mdl-grid">
-              <div class="mdl-card" style="width: 500px">
+          <div class="mdl-cell mdl-cell--4-col" style="margin:0%;">
+            <div class="mdl-grid mdl-grid--no-spacing" style="margin-top:1.5%;">
+              <div class="mdl-card" style="width: 500px; border:3px solid rgb(0, 0, 0); border-radius:15px; margin:0%;">
                 <div class="mdl-card__title">
                   <h2 class="mdl-card__title-text">Parameters</h2>
                 </div>
@@ -171,8 +171,8 @@
                   </div>
               </div>
             </div>
-            <div class="mdl-grid">
-                <div class="mdl-card" style="width: 500px">
+            <div class="mdl-grid mdl-grid--no-spacing" style="margin: 0%;">
+                <div class="mdl-card" style="width: 500px; border:3px solid rgb(0, 0, 0); border-radius:15px;">
                     <div class="mdl-card__title">
                         <h2 class="mdl-card__title-text">Loss Curve</h2>
                     </div>
@@ -198,9 +198,45 @@
       </script>
       <script>
         var grid_button = document.getElementById("grid");
-        grid_button.onclick = function () {
+        grid_button.onclick = function() {
           is_grid = !is_grid;
         };
+        var delete_button = document.getElementById("delete");
+        delete_button.onclick = function() {
+            delete_mode = !delete_mode;
+        };
+        var box_button = document.getElementById("box");
+        box_button.onclick = function() {
+            draw_box = !draw_box;
+        }
+      </script>
+      <script>
+          var s1 = document.getElementById("p1");
+          var t1 = document.getElementById("p1n");
+          s1.oninput = function setText() {
+              t1.value = s1.value;
+          };
+          t1.onchange = function setSlider() {
+              s1.value = t1.value;
+          };
+
+          var s2 = document.getElementById("p2");
+          var t2 = document.getElementById("p2n");
+          s2.oninput = function setText() {
+              t2.value = s2.value;
+          };
+          t2.onchange = function setSlider() {
+              s2.value = t2.value;
+          };
+
+          var s3 = document.getElementById("p3");
+          var t3 = document.getElementById("p3n");
+          s3.oninput = function setText() {
+              t3.value = s3.value;
+          };
+          t3.onchange = function setSlider() {
+              s3.value = t3.value;
+          };
       </script>
     </main>
   </div>
