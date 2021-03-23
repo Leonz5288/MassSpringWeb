@@ -72,8 +72,8 @@ class MassSpring {
       this.program.set_arg_int(0, springs[i].anchorA);
       this.program.set_arg_int(1, springs[i].anchorB);
       this.program.set_arg_float(2, springs[i].distance);
-      this.program.set_arg_float(3, 2000);
-      this.program.set_arg_float(4, 0.15);
+      this.program.set_arg_float(3, this.stiffness);
+      this.program.set_arg_float(4, this.actuation);
       this.pass_spring();
     }
     this.reset();
