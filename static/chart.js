@@ -2,9 +2,10 @@ var ctx = document.getElementById('loss_curve').getContext('2d');
 var myChart = new Chart(ctx, {
     type: 'line',
     data: {
+        labels: [],
         datasets: [{
             label: 'loss',
-            data: [20, 10, 5, 3, 2, 1, 0.5, 0.1, 0.05],
+            data: [],
             borderColor: 'rgba(25, 111, 209, 1)'
         }]
     },
@@ -16,3 +17,11 @@ var myChart = new Chart(ctx, {
         }
     }
 });
+
+function addData(chart, label, data) {
+    chart.data.labels.push(label);
+    chart.data.datasets.forEach((dataset) => {
+        dataset.data.push(data);
+    });
+    chart.update();
+}

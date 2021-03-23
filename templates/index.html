@@ -30,7 +30,7 @@
     <main class="mdl-layout__content">
       <body style="background-color: rgb(245, 245, 245)">
         <div class="mdl-grid">
-          <div class="mdl-cell mdl-cell--2-col", style="margin-left: 3%;">
+          <div class="mdl-cell mdl-cell--2-col", style="margin-left: 6%;">
             <button
               id="grid"
               class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored"
@@ -80,12 +80,13 @@
                       <input
                         class="mdl-slider mdl-js-slider"
                         type="range"
+                        autocomplete="off"
                         id="p1"
-                        min="0"
-                        max="10"
-                        value="5"
+                        min="100"
+                        max="5000"
+                        value="1000"
                         tabindex="0"
-                        step="1"
+                        step="100"
                       />
                     </p>
                   </div>
@@ -95,8 +96,10 @@
                   >
                     <input
                       type="number"
+                      autocomplete="off"
                       id="p1n"
-                      value="5"
+                      value="1000"
+                      step="100"
                       style="
                         box-sizing: border-box;
                         width: 100%;
@@ -112,12 +115,13 @@
                         <input
                           class="mdl-slider mdl-js-slider"
                           type="range"
+                          autocomplete="off"
                           id="p2"
                           min="0"
-                          max="10"
-                          value="5"
+                          max="3"
+                          value="0.15"
                           tabindex="0"
-                          step="1"
+                          step="0.01"
                         />
                       </p>
                     </div>
@@ -127,8 +131,10 @@
                     >
                       <input
                         type="number"
+                        autocomplete="off"
                         id="p2n"
-                        value="5"
+                        value="0.15"
+                        step="0.01"
                         style="
                           box-sizing: border-box;
                           width: 100%;
@@ -144,10 +150,11 @@
                         <input
                           class="mdl-slider mdl-js-slider"
                           type="range"
+                          autocomplete="off"
                           id="p3"
-                          min="0"
-                          max="10"
-                          value="5"
+                          min="10"
+                          max="300"
+                          value="100"
                           tabindex="0"
                           step="1"
                         />
@@ -159,8 +166,9 @@
                     >
                       <input
                         type="number"
+                        autocomplete="off"
                         id="p3n"
-                        value="5"
+                        value="100"
                         style="
                           box-sizing: border-box;
                           width: 100%;

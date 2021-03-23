@@ -9,10 +9,12 @@ class MassSpring {
     this.canvas = canvas;
 
     this.loss = [];
+    this.stiffness = document.getElementById("p1").valueAsNumber;
+    this.actuation = document.getElementById("p2").valueAsNumber;
+    this.num_iter = document.getElementById("p3").valueAsNumber;
   }
 
   play() {
-    console.log("play()");
     this.terminate();
 
     this.gui = new TaichiGUI(
@@ -81,7 +83,7 @@ class MassSpring {
       direction = _;
       this.program.set_arg_int(0, direction);
       this.optimize();
-      for (var iter = 0; iter < 100; iter++) {
+      for (var iter = 0; iter < this.num_iter; iter++) {
         this.clear_states();
         this.program.set_arg_int(0, direction);
         this.clear_gradients();
@@ -121,9 +123,12 @@ class MassSpring {
         this.program.set_arg_int(1, direction);
         this.optimize1();
         this.loss.push(this.program.get_ret_float(0));
+        // if (iter % 10 == 0) {
+        //   addData(myChart, iter, this.program.get_ret_float(0));
+        // }
       }
       this.clear_states();
-      console.log(this.loss);
+      // console.log(this.loss);
     }
 
     this.fps = 0;
