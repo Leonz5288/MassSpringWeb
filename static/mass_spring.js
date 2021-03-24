@@ -1,4 +1,3 @@
-paused = true;
 direction = 1;
 
 class MassSpring {
@@ -29,6 +28,7 @@ class MassSpring {
     this.set_mask = this.program.get("set_mask");
     this.pass_point = this.program.get("pass_point");
     this.pass_spring = this.program.get("pass_spring");
+    this.set_target = this.program.get("set_target");
 
     this.compute_center = this.program.get("compute_center");
     this.nn1 = this.program.get("nn1");
@@ -79,37 +79,28 @@ class MassSpring {
     this.reset();
     this.steps = this.program.get_ret_int(0);
 
-    for (var _ = 0; _ < 2; _++) {
-      direction = _;
-      this.program.set_arg_int(0, direction);
       this.optimize();
       for (var iter = 0; iter < this.num_iter; iter++) {
         this.clear_states();
-        this.program.set_arg_int(0, direction);
         this.clear_gradients();
+        this.set_target();
 
         for (var i = 1; i < this.steps; i++) {
           this.program.set_arg_int(0, i - 1);
-          this.program.set_arg_int(1, direction);
           this.compute_center();
           this.nn1();
           this.nn2();
           this.apply_spring_force();
           this.program.set_arg_int(0, i);
           this.advance_toi();
+          this.compute_loss();
           this.increasing();
         }
-        this.program.set_arg_int(0, this.steps - 1);
-        this.program.set_arg_int(1, direction);
-        this.compute_loss();
 
         // Backpropogation
-        this.program.set_arg_int(0, this.steps - 1);
-        this.program.set_arg_int(1, direction);
-        this.compute_loss_grad();
         for (var i = this.steps - 1; i > 0; i--) {
-          this.program.set_arg_int(1, direction);
           this.program.set_arg_int(0, i);
+          this.compute_loss_grad();
           this.advance_toi_grad();
           this.program.set_arg_int(0, i - 1);
           this.apply_spring_force_grad();
@@ -120,16 +111,14 @@ class MassSpring {
         }
 
         this.program.set_arg_int(0, iter);
-        this.program.set_arg_int(1, direction);
         this.optimize1();
         this.loss.push(this.program.get_ret_float(0));
-        // if (iter % 10 == 0) {
-        //   addData(myChart, iter, this.program.get_ret_float(0));
-        // }
+        if (iter % 10 == 0) {
+          addData(myChart, iter, this.program.get_ret_float(0));
+        }
       }
       this.clear_states();
       // console.log(this.loss);
-    }
 
     this.fps = 0;
     this.frame = 1;
@@ -142,6 +131,7 @@ class MassSpring {
       this.substep();
       this.frame++;
     }
+    this.program.set_arg_int(0, 1);
     this.render();
 
     this.get_num_springs();
@@ -167,16 +157,14 @@ class MassSpring {
 
   substep() {
     this.program.set_arg_int(0, 0);
-    this.program.set_arg_int(1, direction);
-    if (!paused) {
-      this.compute_center();
-      this.nn1();
-      this.nn2();
-    }
+    this.compute_center();
+    this.nn1();
+    this.nn2();
     this.apply_spring_force();
     this.program.set_arg_int(0, 1);
     this.advance_toi();
     this.increasing();
+    this.program.set_arg_int(0, direction);
     this.copy_status();
   }
 
@@ -195,20 +183,18 @@ class MassSpring {
     this.gui = undefined;
     document.addEventListener("keydown", function (event) {
       if (event.key == "ArrowRight") {
-        paused = false;
-        direction = 0;
+        direction = 2;
       }
       if (event.key == "ArrowLeft") {
-        paused = false;
+        direction = 0;
       }
     });
     document.addEventListener("keyup", function (event) {
       if (event.key == "ArrowRight") {
-        paused = true;
         direction = 1;
       }
       if (event.key == "ArrowLeft") {
-        paused = true;
+        direction = 1;
       }
     });
   }
