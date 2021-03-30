@@ -161,6 +161,7 @@ class TaichiGUI {
         this.ctx.beginPath();
         this.ctx.moveTo(x1, y1);
         this.ctx.lineTo(x2, y2);
+        this.ctx.strokeStyle = "black";
         this.ctx.stroke();
     }
 

@@ -68,12 +68,14 @@ class MassSpring {
       this.program.set_arg_float(1, 1 - points[i].y / 512);
       this.pass_point();
     }
+    console.log(springs);
     for (var i = 0; i < springs.length; i++) {
       this.program.set_arg_int(0, springs[i].anchorA);
       this.program.set_arg_int(1, springs[i].anchorB);
       this.program.set_arg_float(2, springs[i].distance);
       this.program.set_arg_float(3, this.stiffness);
-      this.program.set_arg_float(4, this.actuation);
+      if (springs[i].act) {this.program.set_arg_float(4, this.actuation);}
+      else {this.program.set_arg_float(4, 0.0);}
       this.pass_spring();
     }
     this.reset();

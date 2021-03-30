@@ -29,13 +29,13 @@
     <main class="mdl-layout__content">
       <body style="background-color: rgb(245, 245, 245)">
         <div class="mdl-grid">
-          <div class="mdl-cell mdl-cell--2-col", style="margin-left: 6%;">
-            <button
-              id="grid"
-              class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored"
-            >
-              Grid
-            </button>
+          <div class="mdl-cell mdl-cell--2-col" style="margin-left: 6%;">
+            <div class="mdl-grid mdl-grid--no-spacing">Grid</div>
+            <div class="mdl-grid mdl-grid--no-spacing">
+              <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="grid">
+                <input type="checkbox" id="grid" class="mdl-switch__input" checked />
+              </label>
+            </div>
           </div>
           <div class="mdl-cell mdl-cell--2-col">
             <button
@@ -64,7 +64,7 @@
         </div>
         <div class="mdl-grid">
           <div class="mdl-cell mdl-cell--8-col">
-            <canvas id="canvas" height="512" width="1024" style="border:3px solid rgb(0, 0, 0); border-radius:15px;"></canvas>
+            <canvas id="canvas" height="512" width="900" style="border:3px solid rgb(0, 0, 0); border-radius:15px;"></canvas>
           </div>
           <div class="mdl-cell mdl-cell--4-col" style="margin:0%;">
             <div class="mdl-grid mdl-grid--no-spacing" style="margin-top:1.5%;">
@@ -178,7 +178,7 @@
                   </div>
               </div>
             </div>
-            <div class="mdl-grid mdl-grid--no-spacing" style="margin: 0%;">
+            <div class="mdl-grid mdl-grid--no-spacing" style="margin-top: 5%;">
                 <div class="mdl-card" style="width: 500px; border:3px solid rgb(0, 0, 0); border-radius:15px;">
                     <div class="mdl-card__title">
                         <h2 class="mdl-card__title-text">Loss Curve</h2>
@@ -204,8 +204,8 @@
         };
       </script>
       <script>
-        var grid_button = document.getElementById("grid");
-        grid_button.onclick = function() {
+        var grid_swtich = document.getElementById("grid");
+        grid_swtich.onchange = function() {
           is_grid = !is_grid;
         };
         var delete_button = document.getElementById("delete");

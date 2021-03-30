@@ -3,9 +3,9 @@ let springs = [];
 let is_grid = true;
 let draw_box = false;
 let delete_mode = false;
+let acting = false;
 
 function user_create() {
-    console.log("in robots");
     let canvas = document.getElementById("canvas");
     let context = canvas.getContext('2d');
 
@@ -15,33 +15,26 @@ function user_create() {
     let radius = 5;
     let mouseDown = false;
     let connectId = -1; // Temp id of the connecting spring
-    let interval_h = canvas.width / 40;
+    let interval_h = canvas.width / 36;
     let interval_v = canvas.height / 20;
     let grid = [];
 
-    for(var i = 1; i < 40; i++) {
+    for(var i = 1; i < 36; i++) {
         for(var j = 1; j < 20; j++) {
             grid.push({"x":interval_h*i, "y":interval_v*j});
         }
     }
 
-    // document.addEventListener('keydown', function(event) {
-    //     if (event.key == "d") {
-    //         delete_mode = true;
-    //     }
-    //     if (event.key == "b") {
-    //         draw_box = true;
-    //     }
-    // });
-
-    // document.addEventListener('keyup', function(event) {
-    //     if (event.key == "d") {
-    //         delete_mode = false;
-    //     }
-    //     if (event.key == "b") {
-    //         draw_box = false;
-    //     }
-    // });
+    document.addEventListener('keydown', function(event) {
+        if (event.key == "d") {
+            acting = true;
+        }
+    });
+    document.addEventListener('keyup', function(event) {
+        if (event.key == "d") {
+            acting = false;
+        }
+    });
 
     canvas.onmousemove = function(event) {
         mouseX = event.clientX;
@@ -67,6 +60,17 @@ function user_create() {
             return;
         }
 
+        // If click on spring, make it act.
+        if (acting) {
+            let act_list = onSpring();
+            if (act_list.length != 0) {
+                for (var i = act_list.length-1; i >= 0; i--) {
+                    springs[act_list[i]].act = !springs[act_list[i]].act;
+                }
+                return;
+            }
+        }
+
         // TODO: add this function to non-grid mode.
         if (draw_box && is_grid) {
             let box = getClosest(curX, curY);
@@ -89,7 +93,11 @@ function user_create() {
                 for (var j = i+1; j < ids.length; j++) {
                     if (!findSpring(ids[i], ids[j])) {
                         let d = distance(points[ids[i]].x/512, points[ids[i]].y/512, points[ids[j]].x/512, points[ids[j]].y/512);
-                        springs.push({"anchorA":ids[i], "anchorB":ids[j], "distance":d})
+                        let ptA = points.find(function(point) {return point.id == ids[i]});
+                        let ptB = points.find(function(point) {return point.id == ids[j]});
+                        let q = false;
+                        if (ptA.x == ptB.x) q = true;
+                        springs.push({"anchorA":ids[i], "anchorB":ids[j], "distance":d, "act":q})
                     }
                 }
             }
@@ -125,7 +133,7 @@ function user_create() {
         if (delete_mode || (draw_box && is_grid)) {
             adjust();
             return;
-        }
+        } else if (acting) return;
         mouseDown = false;
         let curX = mouseX;
         let curY = mouseY;
@@ -150,13 +158,13 @@ function user_create() {
                 let A = points.find(function(point) {return point.id == connectId});
                 let B = points.find(function(point) {return point.id == pointId});
                 let d = distance(A.x/512, A.y/512, B.x/512, B.y/512);
-                springs.push({"anchorA":connectId, "anchorB":pointId, "distance":d});
+                springs.push({"anchorA":connectId, "anchorB":pointId, "distance":d, "act":false});
             }
         } else {
             if (connectId != anchor) {
                 let A = points.find(function(point) {return point.id == connectId});
                 let d = distance(A.x/512, A.y/512, curX/512, curY/512);
-                springs.push({"anchorA":connectId, "anchorB":anchor, "distance":d});
+                springs.push({"anchorA":connectId, "anchorB":anchor, "distance":d, "act":false});
             }
             points.push({"x":curX, "y":curY, "id":anchor++});
         }
@@ -167,7 +175,7 @@ function user_create() {
         let id = -1;
         let temp_anchor = -1;
         points.forEach(function(point) {
-            if (distance(point.x, point.y, x, y) <= radius * 2) {
+            if (distance(point.x, point.y, x, y) <= radius * 1.5) {
                 id = points.indexOf(point);
                 temp_anchor = point.id;
                 return;
@@ -185,6 +193,12 @@ function user_create() {
             }
             points.splice(id, 1);
             anchor--;
+            adjust();
+        } else {
+            let delete_list = onSpring();
+            for (var i = delete_list.length-1; i >= 0; i--) {
+                springs.splice(delete_list[i], 1);
+            }
             adjust();
         }
     }
@@ -223,6 +237,29 @@ function user_create() {
             }
         });
         return found;
+    }
+
+    function onSpring() {
+        let online = [];
+        springs.forEach(function(spring) {
+            let ptA = points.find(function(point) {return point.id == spring.anchorA});
+            let ptB = points.find(function(point) {return point.id == spring.anchorB});
+            let k = (ptA.y-ptB.y)/(ptA.x-ptB.x);
+            let b = ptA.y - k*ptA.x;
+            let onlineY = k*mouseX + b;
+            let onlineX = mouseY/k + ptA.x - ptA.y/k;
+            if (mouseX <= Math.max(ptA.x, ptB.x) && mouseX >= Math.min(ptA.x, ptB.x)) {
+                if (mouseY <= onlineY+6 && mouseY >= onlineY){
+                    online.push(springs.indexOf(spring));
+                }
+            }
+            else if (mouseY <= Math.max(ptA.y, ptB.y) && mouseY >= Math.min(ptA.y, ptB.y)) {
+                if (mouseX <= onlineX+6 && mouseX >= onlineX) {
+                    online.push(springs.indexOf(spring));
+                }
+            }
+        });
+        return online;
     }
 
     function getClosest(x, y) {
@@ -317,7 +354,7 @@ function user_create() {
         let delete_id = -1;
         if (delete_mode) {
             points.forEach(function(point) {
-                if (distance(point.x, point.y, mouseX, mouseY) <= radius * 2) {
+                if (distance(point.x, point.y, mouseX, mouseY) <= radius * 1.5) {
                     delete_id = points.indexOf(point);
                     return;
                 }
@@ -325,14 +362,34 @@ function user_create() {
         }
 
         springs.forEach(function(spring) {
-            let anchorA = points.find(function(point) {return point.id == spring.anchorA});
-            let anchorB = points.find(function(point) {return point.id == spring.anchorB});
-            if (delete_id != -1 && (anchorA.id == delete_id || anchorB.id == delete_id)) {
-                draw_line(anchorA, anchorB, "red");
+            let ptA = points.find(function(point) {return point.id == spring.anchorA});
+            let ptB = points.find(function(point) {return point.id == spring.anchorB});
+            let color = "black";
+            if (spring.act) {
+                color = "blue";
+            }
+            if (delete_id != -1 && (ptA.id == delete_id || ptB.id == delete_id)) {
+                color = "red";
             }
             else {
-                draw_line(anchorA, anchorB);
+                let k = (ptA.y-ptB.y)/(ptA.x-ptB.x);
+                let b = ptA.y - k*ptA.x;
+                let onlineY = k*mouseX + b;
+                let onlineX = mouseY/k + ptA.x - ptA.y/k;
+                if (mouseX <= Math.max(ptA.x, ptB.x) && mouseX >= Math.min(ptA.x, ptB.x)) {
+                    if (mouseY <= onlineY+5 && mouseY >= onlineY-5){
+                        color = "blue";
+                        if (delete_mode) color = "red";
+                    }
+                }
+                else if (mouseY <= Math.max(ptA.y, ptB.y) && mouseY >= Math.min(ptA.y, ptB.y)) {
+                    if (mouseX <= onlineX+5 && mouseX >= onlineX-5) {
+                        color = "blue";
+                        if (delete_mode) color = "red";
+                    }
+                }
             }
+            draw_line(ptA, ptB, color);
         });
 
         points.forEach(function(point) {
