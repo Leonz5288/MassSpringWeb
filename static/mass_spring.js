@@ -68,7 +68,6 @@ class MassSpring {
       this.program.set_arg_float(1, 1 - points[i].y / 512);
       this.pass_point();
     }
-    console.log(springs);
     for (var i = 0; i < springs.length; i++) {
       this.program.set_arg_int(0, springs[i].anchorA);
       this.program.set_arg_int(1, springs[i].anchorB);
@@ -82,50 +81,68 @@ class MassSpring {
     this.steps = this.program.get_ret_int(0);
 
       this.optimize();
-      for (var iter = 0; iter < this.num_iter; iter++) {
-        this.clear_states();
-        this.clear_gradients();
-        this.set_target();
+      this.draw_graph(this.train.bind(this));
+      console.log("ouT");
+  }
 
-        for (var i = 1; i < this.steps; i++) {
-          this.program.set_arg_int(0, i - 1);
-          this.compute_center();
-          this.nn1();
-          this.nn2();
-          this.apply_spring_force();
-          this.program.set_arg_int(0, i);
-          this.advance_toi();
-          this.compute_loss();
-          this.increasing();
-        }
-
-        // Backpropogation
-        for (var i = this.steps - 1; i > 0; i--) {
-          this.program.set_arg_int(0, i);
-          this.compute_loss_grad();
-          this.advance_toi_grad();
-          this.program.set_arg_int(0, i - 1);
-          this.apply_spring_force_grad();
-          this.nn2_grad();
-          this.nn1_grad();
-          this.compute_center_grad();
-          this.increasing();
-        }
-
-        this.program.set_arg_int(0, iter);
-        this.optimize1();
-        this.loss.push(this.program.get_ret_float(0));
-        if (iter % 10 == 0) {
-          addData(myChart, iter, this.program.get_ret_float(0));
-        }
+  draw_graph(callback) {
+    let i = 0;
+    let n = this.num_iter;
+    function wrapped(timestamp, that) {
+      console.log(that);
+      callback(i++);
+      let id = window.requestAnimationFrame(function(timestamp) {
+        wrapped(0, that);
+      });
+      if (i == n) {
+        window.cancelAnimationFrame(id);
+        console.log(this);
+        this.clear_states(); // Not executing!!!
+        this.fps = 0;
+        this.frame = 1;
+        this.last_time = Date.now();
+        this.gui.animation(this.perFrame.bind(this));
       }
-      this.clear_states();
-      // console.log(this.loss);
+    }
+    wrapped(this);
+  }
 
-    this.fps = 0;
-    this.frame = 1;
-    this.last_time = Date.now();
-    this.gui.animation(this.perFrame.bind(this));
+  train(iter) {
+      this.clear_states();
+      this.clear_gradients();
+      this.set_target();
+
+      for (var i = 1; i < this.steps; i++) {
+        this.program.set_arg_int(0, i - 1);
+        this.compute_center();
+        this.nn1();
+        this.nn2();
+        this.apply_spring_force();
+        this.program.set_arg_int(0, i);
+        this.advance_toi();
+        this.compute_loss();
+        this.increasing();
+      }
+
+      // Backpropogation
+      for (var i = this.steps - 1; i > 0; i--) {
+        this.program.set_arg_int(0, i);
+        this.compute_loss_grad();
+        this.advance_toi_grad();
+        this.program.set_arg_int(0, i - 1);
+        this.apply_spring_force_grad();
+        this.nn2_grad();
+        this.nn1_grad();
+        this.compute_center_grad();
+        this.increasing();
+      }
+
+      this.program.set_arg_int(0, iter);
+      this.optimize1();
+      this.loss.push(this.program.get_ret_float(0));
+      if (iter % 1 == 0) {
+        addData(myChart, iter, this.program.get_ret_float(0));
+      }
   }
 
   onUpdate() {
