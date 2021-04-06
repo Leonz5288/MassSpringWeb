@@ -286,8 +286,8 @@ def increasing():
 
 @hub.kernel
 def clear_gradients():
-    loss[None] = 0
-    loss.grad[None] = 1
+    loss[None] = 0.0
+    loss.grad[None] = 1.0
     for i in range(n_hidden):
         for j in range(n_sin_waves + 4 * real_obj[None] + 2):
             weights1.grad[i, j] = 0.0

@@ -88,23 +88,22 @@ class MassSpring {
   draw_graph(callback) {
     let i = 0;
     let n = this.num_iter;
-    function wrapped(timestamp, that) {
-      console.log(that);
+    let that = this;
+    function wrapped() {
       callback(i++);
       let id = window.requestAnimationFrame(function(timestamp) {
-        wrapped(0, that);
+        wrapped();
       });
       if (i == n) {
         window.cancelAnimationFrame(id);
-        console.log(this);
-        this.clear_states(); // Not executing!!!
-        this.fps = 0;
-        this.frame = 1;
-        this.last_time = Date.now();
-        this.gui.animation(this.perFrame.bind(this));
+        that.clear_states();
+        that.fps = 0;
+        that.frame = 1;
+        that.last_time = Date.now();
+        that.gui.animation(that.perFrame.bind(that));
       }
     }
-    wrapped(this);
+    wrapped();
   }
 
   train(iter) {
