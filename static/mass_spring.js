@@ -82,7 +82,6 @@ class MassSpring {
 
       this.optimize();
       this.draw_graph(this.train.bind(this));
-      console.log("ouT");
   }
 
   draw_graph(callback) {
@@ -96,6 +95,7 @@ class MassSpring {
       });
       if (i == n) {
         window.cancelAnimationFrame(id);
+        console.log(that.loss);
         that.clear_states();
         that.fps = 0;
         that.frame = 1;
@@ -139,7 +139,7 @@ class MassSpring {
       this.program.set_arg_int(0, iter);
       this.optimize1();
       this.loss.push(this.program.get_ret_float(0));
-      if (iter % 1 == 0) {
+      if (iter % 10 == 0) {
         addData(myChart, iter, this.program.get_ret_float(0));
       }
   }

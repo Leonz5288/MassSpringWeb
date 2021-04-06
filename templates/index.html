@@ -188,6 +188,32 @@
             </div>
           </div>
         </div>
+        <div class="mdl-grid">
+          <div class="mdl-cell mdl-cell--2-col">
+            <button
+              id="save"
+              class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored"
+            >
+              Save
+            </button>
+          </div>
+          <div class="mdl-cell mdl-cell--2-col">
+            <button
+              id="load"
+              class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored"
+            >
+              Load
+            </button>
+          </div>
+          <div class="mdl-cell mdl-cell--2-col">
+            <button
+              id="clear"
+              class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
       </body>
 
       <script src="/create_robot.js"></script>
@@ -208,13 +234,67 @@
         grid_swtich.onchange = function() {
           is_grid = !is_grid;
         };
+
         var delete_button = document.getElementById("delete");
         delete_button.onclick = function() {
             delete_mode = !delete_mode;
         };
+
         var box_button = document.getElementById("box");
         box_button.onclick = function() {
             draw_box = !draw_box;
+        }
+
+        var save_button = document.getElementById("save");
+        save_button.onclick = function() {
+          let string = "";
+          for (var i = 0; i < points.length; i++) {
+            string += points[i].x.toString() + ",";
+            string += points[i].y.toString() + ",";
+            string += points[i].id.toString() + "\n";
+          }
+          localStorage.setItem("points", string);
+          string = "";
+          for (var i = 0; i < springs.length; i++) {
+            string += springs[i].anchorA.toString() + ",";
+            string += springs[i].anchorB.toString() + ",";
+            string += springs[i].distance.toString() + ",";
+            string += springs[i].act.toString() + "\n";
+          }
+          localStorage.setItem("springs", string)
+        };
+
+        var load_button = document.getElementById("load");
+        load_button.onclick = function() {
+          points = [];
+          springs = [];
+          let line = localStorage.points.split("\n");
+          anchor = line.length-1;
+          console.log(anchor);
+          for (var i = 0; i < line.length; i++) {
+            if (line[i] == "") continue;
+            let token = line[i].split(",");
+            points.push({"x":parseFloat(token[0]), "y":parseFloat(token[1]), "id":parseInt(token[2])});
+          }
+          line = localStorage.springs.split("\n");
+          for (var i = 0; i < line.length; i++) {
+            if (line[i] == "") continue;
+            let token = line[i].split(",");
+            let act;
+            if (token[3] == "true") {
+              act = true;
+            } else {
+              act = false;
+            }
+            springs.push({"anchorA":parseInt(token[0]), "anchorB":parseInt(token[1]), "distance":parseFloat(token[2]), "act":act})
+          }
+        };
+
+        var clear_button = document.getElementById("clear");
+        clear_button.onclick = function() {
+          points = [];
+          springs = [];
+          anchor = 0;
         }
       </script>
       <script>

@@ -4,6 +4,7 @@ let is_grid = true;
 let draw_box = false;
 let delete_mode = false;
 let acting = false;
+let anchor = 0; // Record of the id of the points
 
 function user_create() {
     let canvas = document.getElementById("canvas");
@@ -11,7 +12,6 @@ function user_create() {
 
     let mouseX = -10;
     let mouseY = -10;
-    let anchor = 0; // Record of the id of the points
     let radius = 5;
     let mouseDown = false;
     let connectId = -1; // Temp id of the connecting spring

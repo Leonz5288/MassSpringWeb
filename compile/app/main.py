@@ -11,7 +11,7 @@ steps = 1024
 assert steps * 2 <= max_steps
 head_id = 0
 elasticity = 0.0
-gravity = -4.8
+gravity = -1.8
 friction = 2.5
 gradient_clip = 1
 spring_omega = 10
@@ -110,14 +110,10 @@ def set_target():
     c = (ti.random() - 0.5) * 2
     d = (ti.random() - 0.5) * 2
     for i in range(max_steps):
-        if i // 300 == 0:
-            target_v[i][0] = a
-        if i // 300 == 1:
-            target_v[i][0] = b
-        if i // 300 == 2:
-            target_v[i][0] = c
-        if i // 300 == 3:
-            target_v[i][0] = d
+        if i < 512:
+            target_v[i][0] = 0.1
+        else:
+            target_v[i][0] = 0.1
         target_v[i][1] = 0.0
 
 @hub.kernel
@@ -326,10 +322,10 @@ def copy_status(d: int):
     center[0] = ti.Vector([0, 0])
     if d == 0:
         target_v[0] = ti.Vector([-1.0, 0.0])
-    elif d == 1:
-        target_v[0] = ti.Vector([0.0, 0.0])
     elif d == 2:
-        target_v[0] = ti.Vector([1.0, 0.0])
+        target_v[0] = ti.Vector([0.0, 0.0])
+    elif d == 1:
+        target_v[0] = ti.Vector([0.1, 0.0])
 
 @hub.kernel
 def optimize():
@@ -357,7 +353,7 @@ def optimize1(iter: int) -> float:
             total_norm_sqr += weights2.grad[i, j]**2
         total_norm_sqr += bias2.grad[i]**2
 
-    #print('TNS = ', total_norm_sqr)
+    print('TNS = ', total_norm_sqr)
 
     gradient_clip = 0.1
     ## scale = learning_rate * min(1.0, gradient_clip / total_norm_sqr ** 0.5)
