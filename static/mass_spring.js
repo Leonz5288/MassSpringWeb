@@ -119,14 +119,15 @@ class MassSpring {
         this.apply_spring_force();
         this.program.set_arg_int(0, i);
         this.advance_toi();
-        this.compute_loss();
         this.increasing();
       }
+      this.program.set_arg_int(this.steps-1);
+      this.compute_loss();
 
       // Backpropogation
+      this.compute_loss_grad();
       for (var i = this.steps - 1; i > 0; i--) {
         this.program.set_arg_int(0, i);
-        this.compute_loss_grad();
         this.advance_toi_grad();
         this.program.set_arg_int(0, i - 1);
         this.apply_spring_force_grad();

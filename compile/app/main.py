@@ -43,6 +43,7 @@ v_inc = ti.Vector.field(2, float)
 ti.root.dense(ti.l, max_steps).dense(ti.i, n_objects).place(x, v, v_inc)
     
 loss = ti.field(float, ())
+goal = ti.Vector.field(2, float, ())
 spring_length = ti.field(float, n_springs)
 spring_stiffness = ti.field(float, n_springs)
 spring_actuation = ti.field(float, n_springs)
@@ -95,6 +96,8 @@ def pass_spring(a: int, b: int, length: float, stiff: float, act: float):
 def reset() -> int:
     loss[None] = 0
     loss.grad[None] = 1
+    goal[None] = [1.9, 0.2]
+    goal.grad[None] = [0.0, 0.0]
     increase[None] = 0
 
     for i in range(real_obj[None]):
@@ -145,8 +148,8 @@ def nn1(t: int):
             actuation += weights1[i, j * 4 + n_sin_waves + 1] * offset[1] * 0.05 * obj_mask[i]
             actuation += weights1[i, j * 4 + n_sin_waves + 2] * v[t, j][0] * 0.05 * obj_mask[i]
             actuation += weights1[i, j * 4 + n_sin_waves + 3] * v[t, j][1] * 0.05 * obj_mask[i]
-        actuation += weights1[i, real_obj[None] * 4 + n_sin_waves] * target_v[t][0]
-        actuation += weights1[i, real_obj[None] * 4 + n_sin_waves + 1] * target_v[t][1]
+        actuation += weights1[i, real_obj[None] * 4 + n_sin_waves] * (goal[None][0] - center[t][0])
+        actuation += weights1[i, real_obj[None] * 4 + n_sin_waves + 1] * (goal[None][1] - center[t][1])
         actuation += bias1[i]
         actuation = ti.tanh(actuation)
         hidden[t, i] = actuation
@@ -164,8 +167,8 @@ def nn1_grad(t: int):
             actuation += weights1[i, j * 4 + n_sin_waves + 1] * offset[1] * 0.05 * obj_mask[i]
             actuation += weights1[i, j * 4 + n_sin_waves + 2] * v[t, j][0] * 0.05 * obj_mask[i]
             actuation += weights1[i, j * 4 + n_sin_waves + 3] * v[t, j][1] * 0.05 * obj_mask[i]
-        actuation += weights1[i, real_obj[None] * 4 + n_sin_waves] * target_v[t][0]
-        actuation += weights1[i, real_obj[None] * 4 + n_sin_waves + 1] * target_v[t][1]
+        actuation += weights1[i, real_obj[None] * 4 + n_sin_waves] * (goal[None][0] - center[t][0])
+        actuation += weights1[i, real_obj[None] * 4 + n_sin_waves + 1] * (goal[None][1] - center[t][1])
         actuation += bias1[i]
         actuation = ti.tanh(actuation)
         hidden[t, i] = actuation
@@ -258,11 +261,11 @@ def advance_toi_grad(t: int):
 
 @hub.kernel
 def compute_loss(t: int):
-    ti.atomic_add(loss[None], dt * (target_v[t][0] - v[t, head_id][0])**2)
+    loss[None] = -x[t, head_id][0]
 
 @hub.grad
 def compute_loss_grad(t: int):
-    ti.atomic_add(loss[None], dt * (target_v[t][0] - v[t, head_id][0])**2)
+    loss[None] = -x[t, head_id][0]
 
 @hub.kernel
 def clear_states():
@@ -284,6 +287,7 @@ def increasing():
 def clear_gradients():
     loss[None] = 0.0
     loss.grad[None] = 1.0
+    goal.grad[None] = ti.Vector([0.0, 0.0])
     for i in range(n_hidden):
         for j in range(n_sin_waves + 4 * real_obj[None] + 2):
             weights1.grad[i, j] = 0.0
