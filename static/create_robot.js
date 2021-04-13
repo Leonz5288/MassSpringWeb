@@ -5,6 +5,7 @@ let draw_box = false;
 let delete_mode = false;
 let acting = false;
 let anchor = 0; // Record of the id of the points
+let head_id = 0;
 
 function user_create() {
     let canvas = document.getElementById("canvas");
@@ -62,6 +63,16 @@ function user_create() {
 
         // If click on spring, make it act.
         if (acting) {
+            let temp_id = -1;
+            points.forEach(function(point) {
+                if (distance(point.x, point.y, mouseX, mouseY) <= radius * 2) {
+                    temp_id = point.id;
+                }
+            });
+            if (temp_id != -1) {
+                head_id = temp_id;
+                return;
+            }
             let act_list = onSpring();
             if (act_list.length != 0) {
                 for (var i = act_list.length-1; i >= 0; i--) {
@@ -69,6 +80,7 @@ function user_create() {
                 }
                 return;
             }
+            return;
         }
 
         // TODO: add this function to non-grid mode.
@@ -378,13 +390,13 @@ function user_create() {
                 let onlineX = mouseY/k + ptA.x - ptA.y/k;
                 if (mouseX <= Math.max(ptA.x, ptB.x) && mouseX >= Math.min(ptA.x, ptB.x)) {
                     if (mouseY <= onlineY+5 && mouseY >= onlineY-5){
-                        color = "blue";
+                        if (acting) color = "blue";
                         if (delete_mode) color = "red";
                     }
                 }
                 else if (mouseY <= Math.max(ptA.y, ptB.y) && mouseY >= Math.min(ptA.y, ptB.y)) {
                     if (mouseX <= onlineX+5 && mouseX >= onlineX-5) {
-                        color = "blue";
+                        if (acting) color = "blue";
                         if (delete_mode) color = "red";
                     }
                 }
@@ -395,6 +407,8 @@ function user_create() {
         points.forEach(function(point) {
             if (delete_id == point.id) {
                 draw_point(point, "red");
+            } else if (point.id == head_id) {
+                draw_point(point, "blue");
             }
             else {
                 draw_point(point);

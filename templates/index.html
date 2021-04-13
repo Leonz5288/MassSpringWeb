@@ -33,32 +33,40 @@
             <div class="mdl-grid mdl-grid--no-spacing">Grid</div>
             <div class="mdl-grid mdl-grid--no-spacing">
               <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="grid">
-                <input type="checkbox" id="grid" class="mdl-switch__input" checked />
+                <input type="checkbox" id="grid" class="mdl-switch__input" checked="checked" />
+              </label>
+            </div>
+          </div>
+          <div class="mdl-cell mdl-cell--1-col">
+            <div class="mdl-grid mdl-grid--no-spacing">Delete</div>
+            <div class="mdl-grid mdl-grid--no-spacing">
+              <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="delete">
+                <input type="checkbox" id="delete" class="mdl-switch__input"/>
+              </label>
+            </div>
+          </div>
+          <div class="mdl-cell mdl-cell--1-col">
+            <div class="mdl-grid mdl-grid--no-spacing">Box</div>
+            <div class="mdl-grid mdl-grid--no-spacing">
+              <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="box">
+                <input type="checkbox" id="box" class="mdl-switch__input"/>
+              </label>
+            </div>
+          </div>
+          <div class="mdl-cell mdl-cell--2-col">
+            <div class="mdl-grid mdl-grid--no-spacing">Act</div>
+            <div class="mdl-grid mdl-grid--no-spacing">
+              <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="act">
+                <input type="checkbox" id="act" class="mdl-switch__input"/>
               </label>
             </div>
           </div>
           <div class="mdl-cell mdl-cell--2-col">
             <button
-              id="delete"
+              id="actall"
               class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored"
             >
-              Delete
-            </button>
-          </div>
-          <div class="mdl-cell mdl-cell--2-col">
-            <button
-              id="box"
-              class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored"
-            >
-              Box
-            </button>
-          </div>
-          <div class="mdl-cell mdl-cell--2-col">
-            <button
-              id="train"
-              class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored"
-            >
-              Train
+              Act All
             </button>
           </div>
         </div>
@@ -176,6 +184,40 @@
                       />
                     </div>
                   </div>
+                  <div class="mdl-grid mdl-grid--no-spacing" style="margin: 5%; margin-top: 1%; margin-bottom: 1%;">
+                    <div class="mdl-cell mdl-cell--2-col">Rate</div>
+                    <div class="mdl-cell mdl-cell--8-col">
+                      <p style="width: 300px">
+                        <input
+                          class="mdl-slider mdl-js-slider"
+                          type="range"
+                          autocomplete="off"
+                          id="p4"
+                          min="1"
+                          max="100"
+                          value="25"
+                          tabindex="0"
+                          step="1"
+                        />
+                      </p>
+                    </div>
+                    <div
+                      class="mdl-cell mdl-cell--2-col"
+                      style="padding-left: 2%"
+                    >
+                      <input
+                        type="number"
+                        autocomplete="off"
+                        id="p4n"
+                        value="25"
+                        style="
+                          box-sizing: border-box;
+                          width: 100%;
+                          text-align: center;
+                        "
+                      />
+                    </div>
+                  </div>
               </div>
             </div>
             <div class="mdl-grid mdl-grid--no-spacing" style="margin-top: 5%;">
@@ -213,6 +255,14 @@
               Clear
             </button>
           </div>
+          <div class="mdl-cell mdl-cell--2-col">
+            <button
+              id="train"
+              class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored"
+            >
+              Train
+            </button>
+          </div>
         </div>
       </body>
 
@@ -230,20 +280,63 @@
         };
       </script>
       <script>
-        var grid_swtich = document.getElementById("grid");
-        grid_swtich.onchange = function() {
+        var grid_switch = document.getElementById("grid");
+        var delete_switch = document.getElementById("delete");
+        var box_switch = document.getElementById("box");
+        var act_switch = document.getElementById("act");
+
+        grid_switch.onclick = function() {
           is_grid = !is_grid;
         };
 
-        var delete_button = document.getElementById("delete");
-        delete_button.onclick = function() {
-            delete_mode = !delete_mode;
+        delete_switch.onclick = function() {
+          delete_mode = !delete_mode;
+          if (delete_mode) {
+            if (draw_box) {
+              box_switch.click();
+            }
+            if (acting) {
+              act_switch.click();
+            }
+          }
         };
 
-        var box_button = document.getElementById("box");
-        box_button.onclick = function() {
-            draw_box = !draw_box;
+        box_switch.onclick = function() {
+          draw_box = !draw_box;
+          if (draw_box) {
+            if (delete_mode) {
+              delete_switch.click();
+            }
+            if (acting) {
+              act_switch.click();
+            }
+          }
         }
+
+        act_switch.onclick = function() {
+          acting = !acting;
+          if (acting) {
+            if (delete_mode) {
+              delete_switch.click();
+            }
+            if (draw_box) {
+              box_switch.click();
+            }
+          }
+        }
+
+        var actall_button = document.getElementById("actall");
+        actall_button.onclick = function() {
+          if (springs.length > 0 && springs[0].act == false) {
+            springs.forEach(function(spring) {
+              spring.act = true;
+            });
+          } else {
+            springs.forEach(function(spring) {
+              spring.act = false;
+            });
+          }
+        };
 
         var save_button = document.getElementById("save");
         save_button.onclick = function() {
@@ -270,7 +363,6 @@
           springs = [];
           let line = localStorage.points.split("\n");
           anchor = line.length-1;
-          console.log(anchor);
           for (var i = 0; i < line.length; i++) {
             if (line[i] == "") continue;
             let token = line[i].split(",");
@@ -323,6 +415,15 @@
           };
           t3.onchange = function setSlider() {
               s3.value = t3.value;
+          };
+
+          var s4 = document.getElementById("p4");
+          var t4 = document.getElementById("p4n");
+          s4.oninput = function setText() {
+              t4.value = s4.value;
+          };
+          t4.onchange = function setSlider() {
+              s4.value = t4.value;
           };
       </script>
     </main>

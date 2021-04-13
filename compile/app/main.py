@@ -92,6 +92,11 @@ def pass_spring(a: int, b: int, length: float, stiff: float, act: float):
     real_spring[None] += 1
 
 @hub.kernel
+def pass_parameter(rate: int, head:int):
+    learning_rate = rate
+    head_id = head
+
+@hub.kernel
 def reset() -> int:
     loss[None] = 0
     loss.grad[None] = 1

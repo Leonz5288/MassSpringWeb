@@ -28,6 +28,7 @@ class MassSpring {
     this.set_mask = this.program.get("set_mask");
     this.pass_point = this.program.get("pass_point");
     this.pass_spring = this.program.get("pass_spring");
+    this.pass_parameter = this.program.get("pass_parameter");
     this.set_target = this.program.get("set_target");
 
     this.compute_center = this.program.get("compute_center");
@@ -77,6 +78,9 @@ class MassSpring {
       else {this.program.set_arg_float(4, 0.0);}
       this.pass_spring();
     }
+    this.program.set_arg_int(0, 25);
+    this.program.set_arg_int(1, 0);
+    this.pass_parameter();
     this.reset();
     this.steps = this.program.get_ret_int(0);
 
