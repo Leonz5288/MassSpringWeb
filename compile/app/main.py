@@ -53,6 +53,7 @@ bias2 = ti.field(float, n_springs)
 hidden = ti.field(float, (max_steps, n_hidden))
 center = ti.Vector.field(2, float, max_steps)
 target_v = ti.Vector.field(2, float, max_steps)
+avg_v = ti.Vector.field(2, float, max_steps)
 act = ti.field(float, (max_steps, n_springs))
 increase = ti.field(int, ())
 
@@ -92,6 +93,10 @@ def pass_spring(a: int, b: int, length: float, stiff: float, act: float):
     real_spring[None] += 1
 
 @hub.kernel
+def pass_parameter(rate: int):
+    learning_rate = rate
+
+@hub.kernel
 def reset() -> int:
     loss[None] = 0
     loss.grad[None] = 1
@@ -111,9 +116,9 @@ def set_target():
     d = (ti.random() - 0.5) * 2
     for i in range(max_steps):
         if i < 512:
-            target_v[i][0] = 0.1
+            target_v[i][0] = 0.2
         else:
-            target_v[i][0] = 0.1
+            target_v[i][0] = 0.2
         target_v[i][1] = 0.0
 
 @hub.kernel
@@ -258,11 +263,19 @@ def advance_toi_grad(t: int):
 
 @hub.kernel
 def compute_loss(t: int):
-    ti.atomic_add(loss[None], dt * (target_v[t][0] - v[t, head_id][0])**2)
+    for _ in range(1):
+        for i in ti.static(range(n_objects)):
+            avg_v[t] += v[t, i] * obj_mask[i]
+        avg_v[t] = avg_v[t] / real_obj[None]
+        loss[None] += dt * (target_v[t][0] - avg_v[t][0])**2
 
 @hub.grad
 def compute_loss_grad(t: int):
-    ti.atomic_add(loss[None], dt * (target_v[t][0] - v[t, head_id][0])**2)
+    for _ in range(1):
+        for i in ti.static(range(n_objects)):
+            avg_v[t] += v[t, i] * obj_mask[i]
+        avg_v[t] = avg_v[t] / real_obj[None]
+        loss[None] += dt * (target_v[t][0] - avg_v[t][0])**2
 
 @hub.kernel
 def clear_states():
@@ -295,6 +308,7 @@ def clear_gradients():
     for i in range(max_steps):
         center.grad[i] = ti.Vector([0.0, 0.0])
         target_v.grad[i] = ti.Vector([0.0, 0.0])
+        avg_v.grad[i] = ti.Vector([0.0, 0.0])
         for j in range(real_obj[None]):
             x.grad[i, j] = ti.Vector([0.0, 0.0])
             v.grad[i, j] = ti.Vector([0.0, 0.0])
