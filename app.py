@@ -31,3 +31,6 @@ def compiled():
 @app.route('/app.wasm')
 def wasm():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'app.wasm', cache_timeout=0)
+
+if __name__ == '__main__':
+    app.run(debug=True)
