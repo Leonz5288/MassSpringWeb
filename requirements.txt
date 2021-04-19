@@ -1,5 +1,6 @@
+
 Usage:   
-  pip3 <command> [options]
+  pip <command> [options]
 
 Commands:
   install                     Install packages.
