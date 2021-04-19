@@ -9,7 +9,6 @@ vis_interval = 256
 output_vis_interval = 8
 steps = 1024
 assert steps * 2 <= max_steps
-head_id = 0
 elasticity = 0.0
 gravity = -1.8
 friction = 2.5
@@ -25,12 +24,13 @@ n_input_states = n_sin_waves + 4 * n_objects + 2
 max_num_particle = 256
 max_num_spring = 512
 dt = 0.004
-learning_rate = 25
 ground_height = 0.1
 
 pos = ti.Vector.field(2, float, max_num_particle)
 spring_anchor_a = ti.field(int, n_springs)
 spring_anchor_b = ti.field(int, n_springs)
+learning_rate = ti.field(float, ())
+head_id = ti.field(int, ())
 
 real_obj = ti.field(int, ()) ## used to store real num_obj
 real_spring = ti.field(int, ()) ## used to store real num_spring
@@ -92,9 +92,9 @@ def pass_spring(a: int, b: int, length: float, stiff: float, act: float):
     real_spring[None] += 1
 
 @hub.kernel
-def pass_parameter(rate: int, head:int):
-    learning_rate = rate
-    head_id = head
+def pass_parameter(rate: float, head:int):
+    learning_rate[None] = rate
+    head_id[None] = head
 
 @hub.kernel
 def reset() -> int:
@@ -251,11 +251,11 @@ def advance_toi_grad(t: int):
 
 @hub.kernel
 def compute_loss(t: int):
-    loss[None] = -x[t, head_id][0]
+    loss[None] = -x[t, head_id[None]][0]
 
 @hub.grad
 def compute_loss_grad(t: int):
-    loss[None] = -x[t, head_id][0]
+    loss[None] = -x[t, head_id[None]][0]
 
 @hub.kernel
 def clear_states():
@@ -341,8 +341,7 @@ def optimize1(iter: int) -> float:
         total_norm_sqr += bias2.grad[i]**2
 
     gradient_clip = 0.1
-    ##scale = learning_rate * min(1.0, gradient_clip / total_norm_sqr ** 0.5)
-    scale = gradient_clip / (total_norm_sqr ** 0.5 + 1e-6)
+    scale = learning_rate[None] * min(1.0, gradient_clip / (total_norm_sqr ** 0.5 + 1e-6))
     for i in range(n_hidden):
         for j in range(n_sin_waves + 4 * real_obj[None] + 2):
             weights1[i, j] -= scale * weights1.grad[i, j]

@@ -19,12 +19,39 @@ function user_create() {
     let interval_h = canvas.width / 36;
     let interval_v = canvas.height / 20;
     let grid = [];
+    let initial_points = "100,307.20000000000005,0\n75,307.20000000000005,1\n100,332.8,2\n75,332.8,3\n75,358.40000000000003,4\n100,358.40000000000003,5\n100,384,6\n75,384,7\n50,384,8\n50,358.40000000000003,9\n25,384,10\n25,358.40000000000003,11\n50,409.6,12\n25,409.6,13\n50,435.20000000000005,14\n25,435.20000000000005,15\n75,409.6,16\n100,409.6,17\n75,435.20000000000005,18\n100,435.20000000000005,19\n";
+    let initial_spring = "0,1,0.048828125,false\n0,2,0.04999999999999993,false\n0,3,0.06988695007664605,false\n1,2,0.06988695007664605,false\n1,3,0.04999999999999993,false\n2,3,0.048828125,false\n4,3,0.050000000000000044,false\n4,5,0.048828125,false\n4,2,0.06988695007664614,false\n3,5,0.06988695007664614,false\n5,2,0.050000000000000044,false\n6,7,0.048828125,false\n6,5,0.04999999999999993,false\n6,4,0.06988695007664605,false\n7,5,0.06988695007664605,false\n7,4,0.04999999999999993,false\n7,8,0.048828125,false\n7,9,0.06988695007664605,false\n4,8,0.06988695007664605,false\n4,9,0.048828125,false\n8,9,0.04999999999999993,false\n8,10,0.048828125,false\n8,11,0.06988695007664605,false\n10,9,0.06988695007664605,false\n10,11,0.04999999999999993,false\n9,11,0.048828125,false\n12,8,0.050000000000000044,true\n12,13,0.048828125,false\n12,10,0.06988695007664614,false\n8,13,0.06988695007664614,false\n13,10,0.050000000000000044,true\n12,14,0.050000000000000044,true\n12,15,0.06988695007664614,false\n14,13,0.06988695007664614,false\n14,15,0.048828125,false\n13,15,0.050000000000000044,true\n16,17,0.048828125,false\n16,7,0.050000000000000044,true\n16,6,0.06988695007664614,false\n17,7,0.06988695007664614,false\n17,6,0.050000000000000044,true\n16,18,0.050000000000000044,true\n16,19,0.06988695007664614,false\n17,18,0.06988695007664614,false\n17,19,0.050000000000000044,true\n18,19,0.048828125,false\n";
 
     for(var i = 1; i < 36; i++) {
         for(var j = 1; j < 20; j++) {
             grid.push({"x":interval_h*i, "y":interval_v*j});
         }
     }
+
+    // Create default robot
+    function default_robot() {
+        let line = initial_points.split("\n");
+        anchor = line.length-1;
+        for (var i = 0; i < line.length; i++) {
+          if (line[i] == "") continue;
+          let token = line[i].split(",");
+          points.push({"x":parseFloat(token[0]), "y":parseFloat(token[1]), "id":parseInt(token[2])});
+        }
+        line = initial_spring.split("\n");
+        for (var i = 0; i < line.length; i++) {
+          if (line[i] == "") continue;
+          let token = line[i].split(",");
+          let act;
+          if (token[3] == "true") {
+            act = true;
+          } else {
+            act = false;
+          }
+          springs.push({"anchorA":parseInt(token[0]), "anchorB":parseInt(token[1]), "distance":parseFloat(token[2]), "act":act})
+        }
+      }
+
+    default_robot();
 
     document.addEventListener('keydown', function(event) {
         if (event.key == "d") {

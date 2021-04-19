@@ -11,6 +11,8 @@ class MassSpring {
     this.stiffness = document.getElementById("p1").valueAsNumber;
     this.actuation = document.getElementById("p2").valueAsNumber;
     this.num_iter = document.getElementById("p3").valueAsNumber;
+    this.learning_rate = document.getElementById("p4").valueAsNumber;
+    this.pause = false;
   }
 
   play() {
@@ -77,8 +79,8 @@ class MassSpring {
       else {this.program.set_arg_float(4, 0.0);}
       this.pass_spring();
     }
-    this.program.set_arg_int(0, 25);
-    this.program.set_arg_int(1, 0);
+    this.program.set_arg_float(0, this.learning_rate);
+    this.program.set_arg_int(1, head_id);
     this.pass_parameter();
     this.reset();
     this.steps = this.program.get_ret_int(0);
@@ -172,6 +174,7 @@ class MassSpring {
     for (let i = 0; i < num_spring; i++) {
       var pos1 = [extr[anchor_a[i] * 2], extr[anchor_a[i] * 2 + 1]];
       var pos2 = [extr[anchor_b[i] * 2], extr[anchor_b[i] * 2 + 1]];
+      if (pos1[0] >= 1.9 || pos2[0] >= 1.9) this.pause = true;
       this.gui.line(pos1, pos2);
     }
   }
@@ -179,8 +182,10 @@ class MassSpring {
   substep() {
     this.program.set_arg_int(0, 0);
     this.compute_center();
-    this.nn1();
-    this.nn2();
+    if (!this.pause) {
+      this.nn1();
+      this.nn2();
+    }
     this.apply_spring_force();
     this.program.set_arg_int(0, 1);
     this.advance_toi();
