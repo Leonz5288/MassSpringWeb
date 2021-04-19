@@ -7,7 +7,7 @@ import hub
 max_steps = 4096
 vis_interval = 256
 output_vis_interval = 8
-steps = 1024
+steps = 2048
 assert steps * 2 <= max_steps
 head_id = 0
 elasticity = 0.0
@@ -114,11 +114,18 @@ def set_target():
     b = (ti.random() - 0.5) * 2
     c = (ti.random() - 0.5) * 2
     d = (ti.random() - 0.5) * 2
+    e = (ti.random() - 0.5) * 2
     for i in range(max_steps):
-        if i < 512:
-            target_v[i][0] = 0.1
+        if i < 300:
+            target_v[i][0] = a
+        elif i < 600:
+            target_v[i][0] = b
+        elif i < 900:
+            target_v[i][0] = c
+        elif i < 1500:
+            target_v[i][0] = d
         else:
-            target_v[i][0] = 0.1
+            target_v[i][0] = e
         target_v[i][1] = 0.0
 
 @hub.kernel
@@ -326,10 +333,10 @@ def copy_status(d: int):
         hidden[0, i] = 0.0
     center[0] = ti.Vector([0, 0])
     if d == 0:
-        target_v[0] = ti.Vector([-1.0, 0.0])
-    elif d == 2:
-        target_v[0] = ti.Vector([0.0, 0.0])
+        target_v[0] = ti.Vector([-0.1, 0.0])
     elif d == 1:
+        target_v[0] = ti.Vector([0.0, 0.0])
+    elif d == 2:
         target_v[0] = ti.Vector([0.1, 0.0])
 
 @hub.kernel
