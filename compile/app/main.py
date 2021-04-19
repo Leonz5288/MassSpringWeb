@@ -341,7 +341,8 @@ def optimize1(iter: int) -> float:
         total_norm_sqr += bias2.grad[i]**2
 
     gradient_clip = 0.1
-    scale = learning_rate * min(1.0, gradient_clip / total_norm_sqr ** 0.5)
+    ##scale = learning_rate * min(1.0, gradient_clip / total_norm_sqr ** 0.5)
+    scale = gradient_clip / (total_norm_sqr ** 0.5 + 1e-6)
     for i in range(n_hidden):
         for j in range(n_sin_waves + 4 * real_obj[None] + 2):
             weights1[i, j] -= scale * weights1.grad[i, j]
