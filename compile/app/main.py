@@ -110,10 +110,6 @@ def reset() -> int:
 
 @hub.kernel
 def set_target():
-    a = (ti.random() - 0.5) * 2
-    b = (ti.random() - 0.5) * 2
-    c = (ti.random() - 0.5) * 2
-    d = (ti.random() - 0.5) * 2
     for i in range(max_steps):
         if i < 512:
             target_v[i][0] = 0.1
