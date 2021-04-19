@@ -41,6 +41,7 @@ x = ti.Vector.field(2, float)
 v = ti.Vector.field(2, float)
 v_inc = ti.Vector.field(2, float)
 ti.root.dense(ti.l, max_steps).dense(ti.i, n_objects).place(x, v, v_inc)
+goal = ti.Vector.field(2, float, ())
     
 loss = ti.field(float, ())
 spring_length = ti.field(float, n_springs)
@@ -52,7 +53,6 @@ weights2 = ti.field(float, (n_springs, n_hidden))
 bias2 = ti.field(float, n_springs)
 hidden = ti.field(float, (max_steps, n_hidden))
 center = ti.Vector.field(2, float, max_steps)
-target_v = ti.Vector.field(2, float, max_steps)
 act = ti.field(float, (max_steps, n_springs))
 increase = ti.field(int, ())
 
@@ -100,6 +100,7 @@ def pass_parameter(rate: int, head:int):
 def reset() -> int:
     loss[None] = 0
     loss.grad[None] = 1
+    goal[None] = ti.Vector([1.9, 0.2])
     increase[None] = 0
 
     for i in range(real_obj[None]):
@@ -107,15 +108,6 @@ def reset() -> int:
     for i in range(real_spring[None]):
         spring_mask[i] = 1
     return steps
-
-@hub.kernel
-def set_target():
-    for i in range(max_steps):
-        if i < 512:
-            target_v[i][0] = 0.1
-        else:
-            target_v[i][0] = 0.1
-        target_v[i][1] = 0.0
 
 @hub.kernel
 def compute_center(t: int):
@@ -146,8 +138,8 @@ def nn1(t: int):
             actuation += weights1[i, j * 4 + n_sin_waves + 1] * offset[1] * 0.05 * obj_mask[i]
             actuation += weights1[i, j * 4 + n_sin_waves + 2] * v[t, j][0] * 0.05 * obj_mask[i]
             actuation += weights1[i, j * 4 + n_sin_waves + 3] * v[t, j][1] * 0.05 * obj_mask[i]
-        actuation += weights1[i, real_obj[None] * 4 + n_sin_waves] * target_v[t][0]
-        actuation += weights1[i, real_obj[None] * 4 + n_sin_waves + 1] * target_v[t][1]
+        actuation += weights1[i, real_obj[None] * 4 + n_sin_waves] * (goal[None][0] - center[t][0])
+        actuation += weights1[i, real_obj[None] * 4 + n_sin_waves + 1] * (goal[None][1] - center[t][1])
         actuation += bias1[i]
         actuation = ti.tanh(actuation)
         hidden[t, i] = actuation
@@ -165,8 +157,8 @@ def nn1_grad(t: int):
             actuation += weights1[i, j * 4 + n_sin_waves + 1] * offset[1] * 0.05 * obj_mask[i]
             actuation += weights1[i, j * 4 + n_sin_waves + 2] * v[t, j][0] * 0.05 * obj_mask[i]
             actuation += weights1[i, j * 4 + n_sin_waves + 3] * v[t, j][1] * 0.05 * obj_mask[i]
-        actuation += weights1[i, real_obj[None] * 4 + n_sin_waves] * target_v[t][0]
-        actuation += weights1[i, real_obj[None] * 4 + n_sin_waves + 1] * target_v[t][1]
+        actuation += weights1[i, real_obj[None] * 4 + n_sin_waves] * (goal[None][0] - center[t][0])
+        actuation += weights1[i, real_obj[None] * 4 + n_sin_waves + 1] * (goal[None][1] - center[t][1])
         actuation += bias1[i]
         actuation = ti.tanh(actuation)
         hidden[t, i] = actuation
@@ -259,11 +251,11 @@ def advance_toi_grad(t: int):
 
 @hub.kernel
 def compute_loss(t: int):
-    ti.atomic_add(loss[None], dt * (target_v[t][0] - v[t, head_id][0])**2)
+    loss[None] = -x[t, head_id][0]
 
 @hub.grad
 def compute_loss_grad(t: int):
-    ti.atomic_add(loss[None], dt * (target_v[t][0] - v[t, head_id][0])**2)
+    loss[None] = -x[t, head_id][0]
 
 @hub.kernel
 def clear_states():
@@ -285,6 +277,7 @@ def increasing():
 def clear_gradients():
     loss[None] = 0.0
     loss.grad[None] = 1.0
+    goal.grad[None] = [0.0, 0.0]
     for i in range(n_hidden):
         for j in range(n_sin_waves + 4 * real_obj[None] + 2):
             weights1.grad[i, j] = 0.0
@@ -295,7 +288,6 @@ def clear_gradients():
         bias2.grad[i] = 0.0
     for i in range(max_steps):
         center.grad[i] = ti.Vector([0.0, 0.0])
-        target_v.grad[i] = ti.Vector([0.0, 0.0])
         for j in range(real_obj[None]):
             x.grad[i, j] = ti.Vector([0.0, 0.0])
             v.grad[i, j] = ti.Vector([0.0, 0.0])
@@ -321,12 +313,6 @@ def copy_status(d: int):
     for i in range(n_hidden):
         hidden[0, i] = 0.0
     center[0] = ti.Vector([0, 0])
-    if d == 0:
-        target_v[0] = ti.Vector([-1.0, 0.0])
-    elif d == 2:
-        target_v[0] = ti.Vector([0.0, 0.0])
-    elif d == 1:
-        target_v[0] = ti.Vector([0.1, 0.0])
 
 @hub.kernel
 def optimize():
@@ -353,8 +339,6 @@ def optimize1(iter: int) -> float:
         for j in range(n_hidden):
             total_norm_sqr += weights2.grad[i, j]**2
         total_norm_sqr += bias2.grad[i]**2
-
-    print('TNS = ', total_norm_sqr)
 
     gradient_clip = 0.1
     scale = learning_rate * min(1.0, gradient_clip / total_norm_sqr ** 0.5)

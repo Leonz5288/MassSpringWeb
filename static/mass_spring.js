@@ -29,7 +29,6 @@ class MassSpring {
     this.pass_point = this.program.get("pass_point");
     this.pass_spring = this.program.get("pass_spring");
     this.pass_parameter = this.program.get("pass_parameter");
-    this.set_target = this.program.get("set_target");
 
     this.compute_center = this.program.get("compute_center");
     this.nn1 = this.program.get("nn1");
@@ -113,7 +112,6 @@ class MassSpring {
   train(iter) {
       this.clear_states();
       this.clear_gradients();
-      this.set_target();
 
       for (var i = 1; i < this.steps; i++) {
         this.program.set_arg_int(0, i - 1);
@@ -123,14 +121,15 @@ class MassSpring {
         this.apply_spring_force();
         this.program.set_arg_int(0, i);
         this.advance_toi();
-        this.compute_loss();
         this.increasing();
       }
+      this.program.set_arg_int(0, this.steps-1);
+      this.compute_loss();
 
+      this.compute_loss_grad();
       // Backpropogation
       for (var i = this.steps - 1; i > 0; i--) {
         this.program.set_arg_int(0, i);
-        this.compute_loss_grad();
         this.advance_toi_grad();
         this.program.set_arg_int(0, i - 1);
         this.apply_spring_force_grad();
@@ -203,22 +202,6 @@ class MassSpring {
     this.frame = 0;
     if (typeof this.gui != "undefined") this.gui.stopped = true;
     this.gui = undefined;
-    document.addEventListener("keydown", function (event) {
-      if (event.key == "ArrowRight") {
-        direction = 2;
-      }
-      if (event.key == "ArrowLeft") {
-        direction = 0;
-      }
-    });
-    document.addEventListener("keyup", function (event) {
-      if (event.key == "ArrowRight") {
-        direction = 1;
-      }
-      if (event.key == "ArrowLeft") {
-        direction = 1;
-      }
-    });
   }
 
   loadScript(url) {
