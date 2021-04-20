@@ -283,20 +283,35 @@ function user_create() {
         springs.forEach(function(spring) {
             let ptA = points.find(function(point) {return point.id == spring.anchorA});
             let ptB = points.find(function(point) {return point.id == spring.anchorB});
-            let k = (ptA.y-ptB.y)/(ptA.x-ptB.x);
-            let b = ptA.y - k*ptA.x;
-            let onlineY = k*mouseX + b;
-            let onlineX = mouseY/k + ptA.x - ptA.y/k;
-            if (mouseX <= Math.max(ptA.x, ptB.x) && mouseX >= Math.min(ptA.x, ptB.x)) {
-                if (mouseY <= onlineY+6 && mouseY >= onlineY){
-                    online.push(springs.indexOf(spring));
-                }
+            // Calculate the distance between mouse and the spring line segment.
+            var x = mouseX; var y = mouseY; var x1 = ptA.x; var y1 = ptA.y; var x2 = ptB.x; var y2 = ptB.y;
+            var A = x - x1;
+            var B = y - y1;
+            var C = x2 - x1;
+            var D = y2 - y1;
+            var dot = A * C + B * D;
+            var len_sq = C * C + D * D;
+            var param = -1;
+            if (len_sq != 0) //in case of 0 length line
+                param = dot / len_sq;
+            var xx, yy;
+            if (param < 0) {
+                xx = x1;
+                yy = y1;
             }
-            else if (mouseY <= Math.max(ptA.y, ptB.y) && mouseY >= Math.min(ptA.y, ptB.y)) {
-                if (mouseX <= onlineX+6 && mouseX >= onlineX) {
-                    online.push(springs.indexOf(spring));
-                }
+            else if (param > 1) {
+                xx = x2;
+                yy = y2;
             }
+            else {
+                xx = x1 + param * C;
+                yy = y1 + param * D;
+            }
+            var dx = x - xx;
+            var dy = y - yy;
+            var dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < 4) online.push(springs.indexOf(spring));
         });
         return online;
     }
@@ -411,21 +426,36 @@ function user_create() {
                 color = "red";
             }
             else {
-                let k = (ptA.y-ptB.y)/(ptA.x-ptB.x);
-                let b = ptA.y - k*ptA.x;
-                let onlineY = k*mouseX + b;
-                let onlineX = mouseY/k + ptA.x - ptA.y/k;
-                if (mouseX <= Math.max(ptA.x, ptB.x) && mouseX >= Math.min(ptA.x, ptB.x)) {
-                    if (mouseY <= onlineY+5 && mouseY >= onlineY-5){
-                        if (acting) color = "blue";
-                        if (delete_mode) color = "red";
-                    }
+                var x = mouseX; var y = mouseY; var x1 = ptA.x; var y1 = ptA.y; var x2 = ptB.x; var y2 = ptB.y;
+                var A = x - x1;
+                var B = y - y1;
+                var C = x2 - x1;
+                var D = y2 - y1;
+                var dot = A * C + B * D;
+                var len_sq = C * C + D * D;
+                var param = -1;
+                if (len_sq != 0) //in case of 0 length line
+                    param = dot / len_sq;
+                var xx, yy;
+                if (param < 0) {
+                    xx = x1;
+                    yy = y1;
                 }
-                else if (mouseY <= Math.max(ptA.y, ptB.y) && mouseY >= Math.min(ptA.y, ptB.y)) {
-                    if (mouseX <= onlineX+5 && mouseX >= onlineX-5) {
-                        if (acting) color = "blue";
-                        if (delete_mode) color = "red";
-                    }
+                else if (param > 1) {
+                    xx = x2;
+                    yy = y2;
+                }
+                else {
+                    xx = x1 + param * C;
+                    yy = y1 + param * D;
+                }
+                var dx = x - xx;
+                var dy = y - yy;
+                var dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 4) {
+                    if (acting) color = "blue";
+                    if (delete_mode) color = "red";
                 }
             }
             draw_line(ptA, ptB, color);
