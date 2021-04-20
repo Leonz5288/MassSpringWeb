@@ -12,7 +12,11 @@ var myChart = new Chart(ctx, {
     options: {
         scales: {
             yAxes: [{
-                stacked: true
+                stacked: true,
+                ticks: {
+                    beginAtZero: false,
+                    max: 0
+                }
             }]
         }
     }
