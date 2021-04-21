@@ -14,8 +14,7 @@ var myChart = new Chart(ctx, {
             yAxes: [{
                 stacked: true,
                 ticks: {
-                    beginAtZero: false,
-                    max: 0
+                    beginAtZero: true,
                 }
             }]
         }

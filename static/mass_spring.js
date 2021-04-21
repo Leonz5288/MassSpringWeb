@@ -145,7 +145,7 @@ class MassSpring {
       this.optimize1();
       this.loss.push(this.program.get_ret_float(0));
       if (iter % 10 == 0) {
-        addData(myChart, iter, this.program.get_ret_float(0));
+        addData(myChart, iter, -this.program.get_ret_float(0));
       }
   }
 

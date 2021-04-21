@@ -477,6 +477,9 @@ function user_create() {
             let B = {"x":mouseX, "y":mouseY};
             draw_line(A, B);
         }
+        context.font = "15px Arial";
+        context.fillText("point count: " + points.length + "/256", 10, 20);
+        context.fillText("spring count: " + springs.length + "/512", 10, 40);
         window.requestAnimationFrame(draw);
     }
     draw();
