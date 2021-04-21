@@ -420,7 +420,7 @@ function user_create() {
             let ptB = points.find(function(point) {return point.id == spring.anchorB});
             let color = "black";
             if (spring.act) {
-                color = "blue";
+                color = "#0394fc";
             }
             if (delete_id != -1 && (ptA.id == delete_id || ptB.id == delete_id)) {
                 color = "red";
@@ -454,7 +454,7 @@ function user_create() {
                 var dist = Math.sqrt(dx * dx + dy * dy);
 
                 if (dist < 4) {
-                    if (acting) color = "blue";
+                    if (acting) color = "#0394fc";
                     if (delete_mode) color = "red";
                 }
             }
@@ -465,7 +465,7 @@ function user_create() {
             if (delete_id == point.id) {
                 draw_point(point, "red");
             } else if (point.id == head_id) {
-                draw_point(point, "blue");
+                draw_point(point, "#0394fc");
             }
             else {
                 draw_point(point);
@@ -478,8 +478,9 @@ function user_create() {
             draw_line(A, B);
         }
         context.font = "15px Arial";
-        context.fillText("point count: " + points.length + "/256", 10, 20);
-        context.fillText("spring count: " + springs.length + "/512", 10, 40);
+        context.fillStyle = "black";
+        context.fillText("point count: " + points.length + "/50", 10, 20);
+        context.fillText("spring count: " + springs.length + "/200", 10, 40);
         window.requestAnimationFrame(draw);
     }
     draw();

@@ -16,7 +16,7 @@ gradient_clip = 1
 spring_omega = 10
 damping = 15
 n_objects = 50
-n_springs = 100
+n_springs = 200
 n_sin_waves = 10
 n_hidden = 32
 n_input_states = n_sin_waves + 4 * n_objects + 2
@@ -138,8 +138,8 @@ def nn1(t: int):
             actuation += weights1[i, j * 4 + n_sin_waves + 1] * offset[1] * 0.05 * obj_mask[i]
             actuation += weights1[i, j * 4 + n_sin_waves + 2] * v[t, j][0] * 0.05 * obj_mask[i]
             actuation += weights1[i, j * 4 + n_sin_waves + 3] * v[t, j][1] * 0.05 * obj_mask[i]
-        actuation += weights1[i, real_obj[None] * 4 + n_sin_waves] * (goal[None][0] - center[t][0])
-        actuation += weights1[i, real_obj[None] * 4 + n_sin_waves + 1] * (goal[None][1] - center[t][1])
+        actuation += weights1[i, n_objects * 4 + n_sin_waves] * (goal[None][0] - center[t][0])
+        actuation += weights1[i, n_objects * 4 + n_sin_waves + 1] * (goal[None][1] - center[t][1])
         actuation += bias1[i]
         actuation = ti.tanh(actuation)
         hidden[t, i] = actuation
@@ -279,7 +279,7 @@ def clear_gradients():
     loss.grad[None] = 1.0
     goal.grad[None] = [0.0, 0.0]
     for i in range(n_hidden):
-        for j in range(n_sin_waves + 4 * real_obj[None] + 2):
+        for j in range(n_sin_waves + 4 * n_objects + 2):
             weights1.grad[i, j] = 0.0
         bias1.grad[i] = 0.0
     for i in range(real_spring[None]):
@@ -288,11 +288,11 @@ def clear_gradients():
         bias2.grad[i] = 0.0
     for i in range(max_steps):
         center.grad[i] = ti.Vector([0.0, 0.0])
-        for j in range(real_obj[None]):
+        for j in range(n_objects):
             x.grad[i, j] = ti.Vector([0.0, 0.0])
             v.grad[i, j] = ti.Vector([0.0, 0.0])
             v_inc.grad[i, j] = ti.Vector([0.0, 0.0])
-        for j in range(real_spring[None]):
+        for j in range(n_springs):
             act.grad[i, j] = 0.0
         for j in range(n_hidden):
             hidden.grad[i, j] = 0.0

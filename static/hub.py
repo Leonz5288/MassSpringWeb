@@ -68,7 +68,7 @@ def bind_spring_anchors(pos1, pos2, num=None):
         for i in range(num):
             posout[i + num] = pos2[i]
 
-    posout = np.empty(num * 2, dtype=np.int32) ## FIXME: not sure if this is correct, debug here first
+    posout = np.empty(num * 2, dtype=np.int32)
     get_num_springs()
     get_spring_anchors(posout)
 
