@@ -295,10 +295,14 @@
               <h2 class="mdl-card__title-text">About the author</h2>
             </div>
             <div class="mdl-card_supporting-text" style="margin-left: 1%;">
-              Jiasheng Zhang, under the guidance of Yuanming Hu.
+              Jiasheng Zhang, CS bachelor degree at University of Wisconsin-Madison.
+            </div>
+            <div class="mdl-card_supporting-text" style="margin-left: 1%;">
+              E-Mail: leonz5288@hotmail.com
             </div>
           </div>
         </div>
+        <div class="mdl-grid"></div>
       </body>
 
       <script src="/create_robot.js"></script>
@@ -308,6 +312,7 @@
       <script>
         var train_button = document.getElementById("train");
         train_button.onclick = function () {
+          train = true;
           var mass_spring = {};
           var canvas = document.getElementById("canvas");
           mass_spring = new MassSpring(canvas);
@@ -419,6 +424,10 @@
 
         var clear_button = document.getElementById("clear");
         clear_button.onclick = function() {
+          if (train) {
+            location.reload();
+            return false;
+          }
           points = [];
           springs = [];
           anchor = 0;

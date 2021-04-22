@@ -3,6 +3,7 @@ let springs = [];
 let is_grid = true;
 let draw_box = false;
 let delete_mode = false;
+let train = false;
 let acting = false;
 let anchor = 0; // Record of the id of the points
 let head_id = 0;
