@@ -71,12 +71,14 @@ def do_compile(target, source=None, extra=[]):
 
 
 def start_compile():
-    dst = '/Users/leon5288/Desktop/Programming/taichi/mass_spring/compile/compiled'
+    path = os.path.dirname(os.path.abspath(__file__))
+    dst = os.path.join(path, 'compiled')
 
     script = f'/compiled.js'
 
-    src = '/Users/leon5288/Desktop/Programming/taichi/mass_spring/compile/app/main.py'
-    ext = '/Users/leon5288/Desktop/Programming/taichi/mass_spring/static/hub.py'
+    src = os.path.join(path, 'app/main.py')
+    path = os.path.dirname(os.path.abspath(path))
+    ext = os.path.join(path, 'static/hub.py')
 
     print('compiling', src, 'to', dst)
     output, status = do_compile(dst, src, ext)

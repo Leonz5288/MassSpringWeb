@@ -1,7 +1,7 @@
 let points = [];
 let springs = [];
 let is_grid = true;
-let draw_box = false;
+let draw_box = true;
 let delete_mode = false;
 let acting = false;
 let anchor = 0; // Record of the id of the points

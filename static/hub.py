@@ -6,7 +6,7 @@ ti.init()
 
 
 def kernel(foo):
-    from taichi.lang.kernel import _kernel_impl
+    from taichi.lang.kernel_impl import _kernel_impl
     foo = _kernel_impl(foo, level_of_class_stackframe=3)
     nargs = foo._primal.func.__code__.co_argcount
     args = [0 for i in range(nargs)]
@@ -14,7 +14,7 @@ def kernel(foo):
     return foo
 
 def grad(foo):
-    from taichi.lang.kernel import _kernel_impl
+    from taichi.lang.kernel_impl import _kernel_impl
     foo = _kernel_impl(foo, level_of_class_stackframe=3)
     nargs = foo._adjoint.func.__code__.co_argcount
     args = [0 for i in range(nargs)]
