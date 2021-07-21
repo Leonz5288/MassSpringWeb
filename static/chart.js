@@ -1,10 +1,10 @@
-var ctx = document.getElementById('loss_curve').getContext('2d');
+var ctx = document.getElementById('reward_curve').getContext('2d');
 var myChart = new Chart(ctx, {
     type: 'line',
     data: {
         labels: [],
         datasets: [{
-            label: 'loss',
+            label: 'reward',
             data: [],
             borderColor: 'rgba(25, 111, 209, 1)'
         }]
