@@ -378,7 +378,7 @@ function user_create() {
             let ptB = points.find(function(point) {return point.id == spring.anchorB});
             let color = "black";
             if (spring.act) {
-                color = "blue";
+                color = "#34d8eb";
             }
             if (delete_id != -1 && (ptA.id == delete_id || ptB.id == delete_id)) {
                 color = "red";
@@ -390,13 +390,13 @@ function user_create() {
                 let onlineX = mouseY/k + ptA.x - ptA.y/k;
                 if (mouseX <= Math.max(ptA.x, ptB.x) && mouseX >= Math.min(ptA.x, ptB.x)) {
                     if (mouseY <= onlineY+5 && mouseY >= onlineY-5){
-                        if (acting) color = "blue";
+                        if (acting) color = "#34d8eb";
                         if (delete_mode) color = "red";
                     }
                 }
                 else if (mouseY <= Math.max(ptA.y, ptB.y) && mouseY >= Math.min(ptA.y, ptB.y)) {
                     if (mouseX <= onlineX+5 && mouseX >= onlineX-5) {
-                        if (acting) color = "blue";
+                        if (acting) color = "#34d8eb";
                         if (delete_mode) color = "red";
                     }
                 }
@@ -408,7 +408,7 @@ function user_create() {
             if (delete_id == point.id) {
                 draw_point(point, "red");
             } else if (point.id == head_id) {
-                draw_point(point, "blue");
+                draw_point(point, "#34d8eb");
             }
             else {
                 draw_point(point);
