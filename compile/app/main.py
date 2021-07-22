@@ -41,7 +41,7 @@ x = ti.Vector.field(2, float)
 v = ti.Vector.field(2, float)
 v_inc = ti.Vector.field(2, float)
 ti.root.dense(ti.l, max_steps).dense(ti.i, n_objects).place(x, v, v_inc)
-    
+
 loss = ti.field(float, ())
 spring_length = ti.field(float, n_springs)
 spring_stiffness = ti.field(float, n_springs)
@@ -338,7 +338,7 @@ def optimize():
         for j in range(n_hidden):
             # TODO: n_springs should be n_actuators
             weights2[i, j] = ti.random() * ti.sqrt(2 / (n_hidden + real_spring[None])) * 3
-        
+
 @hub.kernel
 def optimize1(iter: int) -> float:
     #print('Iter=', iter, 'Loss=', loss[None])
